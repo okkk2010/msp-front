@@ -1,92 +1,239 @@
-import { OverlayCard } from "../components/overlay/OverlayCard";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { fetchGamesByPlatform } from "../api/gameApi";
+import { saveOverlayToLibrary } from "../api/libraryApi";
+import { fetchOverlayList } from "../api/overlayApi";
+import { fetchPlatforms } from "../api/platformApi";
 import { Button } from "../components/common/Button";
-import { Input } from "../components/common/Input";
-import { Select } from "../components/common/Select";
+import { OverlayCodeSearch } from "../components/overlay/OverlayCodeSearch";
+import { OverlayFilterBar } from "../components/overlay/OverlayFilterBar";
+import { OverlayGrid } from "../components/overlay/OverlayGrid";
+import { OverlaySearchBar } from "../components/overlay/OverlaySearchBar";
+import { useAuth } from "../hooks/useAuth";
 import { useOverlaySearch } from "../hooks/useOverlaySearch";
+import { useToast } from "../hooks/useToast";
+import { markOverlaySaved } from "../store/libraryStore";
+import { getApiErrorMessage } from "../utils/apiError";
+import { formatRelativeDate } from "../utils/dateFormat";
 
 export function OverlayListPage() {
-  const { filters, resetFilters, setCode, setKeyword, setPlatform, setSort } =
-    useOverlaySearch();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const { showToast } = useToast();
+  const {
+    filters,
+    resetFilters,
+    setCode,
+    setGame,
+    setKeyword,
+    setPlatform,
+    setSort,
+  } = useOverlaySearch();
+  const [items, setItems] = useState([]);
+  const [platforms, setPlatforms] = useState([]);
+  const [games, setGames] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [reloadNonce, setReloadNonce] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+
+    fetchPlatforms()
+      .then((data) => {
+        if (!active) {
+          return;
+        }
+
+        setPlatforms(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!active) {
+          return;
+        }
+
+        setPlatforms([
+          { id: 1, name: "Windows", slug: "windows" },
+          { id: 2, name: "Android", slug: "android" },
+        ]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    if (!filters.platform) {
+      setGames([]);
+      return () => {
+        active = false;
+      };
+    }
+
+    fetchGamesByPlatform(filters.platform)
+      .then((data) => {
+        if (!active) {
+          return;
+        }
+
+        setGames(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!active) {
+          return;
+        }
+
+        setGames([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [filters.platform]);
+
+  useEffect(() => {
+    let active = true;
+
+    setIsLoading(true);
+    setError("");
+
+    fetchOverlayList(filters)
+      .then((data) => {
+        if (!active) {
+          return;
+        }
+
+        const nextItems = normalizeOverlayItems(data);
+        setItems(nextItems);
+      })
+      .catch((requestError) => {
+        if (!active) {
+          return;
+        }
+
+        setItems([]);
+        setError(getApiErrorMessage(requestError));
+      })
+      .finally(() => {
+        if (!active) {
+          return;
+        }
+
+        setIsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [filters, reloadNonce]);
+
+  async function handleSave(item) {
+    if (!isAuthenticated) {
+      showToast({
+        message: "로그인이 필요한 기능입니다.",
+        type: "info",
+      });
+      navigate("/library");
+      return;
+    }
+
+    try {
+      await saveOverlayToLibrary(item.id);
+      markOverlaySaved(item.id);
+      setItems((currentItems) =>
+        currentItems.map((currentItem) =>
+          currentItem.id === item.id
+            ? {
+                ...currentItem,
+                isSaved: true,
+                savedCount: (currentItem.savedCount ?? 0) + 1,
+              }
+            : currentItem,
+        ),
+      );
+      showToast({
+        message: "라이브러리에 저장했습니다.",
+        type: "success",
+      });
+    } catch (requestError) {
+      showToast({
+        message: getApiErrorMessage(requestError),
+        type: "error",
+      });
+    }
+  }
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-8">
       <div className="space-y-2">
         <h1 className="text-3xl font-semibold">Overlay Discover</h1>
         <p className="text-sm text-[var(--color-text-sub)]">
-          4단계 기준으로 검색/필터 상태를 store에 연결했습니다. 실제 API 호출은 다음 단계에서 이
-          상태를 그대로 사용하면 됩니다.
+          Find overlay layouts for comfortable 3D gameplay.
         </p>
       </div>
-      <div className="grid gap-4 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 md:grid-cols-4">
-        <Input
+      <div className="grid gap-4 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 lg:grid-cols-[minmax(0,1fr)_180px_180px_auto]">
+        <OverlaySearchBar
           onChange={(event) => setKeyword(event.target.value)}
-          placeholder="keyword"
           value={filters.keyword}
         />
-        <Input
+        <OverlayCodeSearch
           onChange={(event) => setCode(event.target.value.toUpperCase())}
-          placeholder="6-digit code"
           value={filters.code}
         />
-        <Select
-          onChange={(event) => setPlatform(event.target.value)}
-          value={filters.platform}
-        >
-          <option value="">All Platforms</option>
-          <option value="windows">Windows</option>
-          <option value="android">Android</option>
-        </Select>
-        <Select onChange={(event) => setSort(event.target.value)} value={filters.sort}>
-          <option value="newest">Newest</option>
-          <option value="updated">Updated</option>
-          <option value="saved">Saved</option>
-        </Select>
-        <div className="md:col-span-4 flex items-center justify-between gap-3">
-          <p className="text-sm text-[var(--color-text-sub)]">
-            page {filters.page + 1} · size {filters.size}
-          </p>
-          <Button onClick={resetFilters} variant="secondary">
-            Reset Filters
+        <div className="flex items-end">
+          <Button className="w-full" onClick={() => navigate("/editor")}>
+            Create Overlay
           </Button>
         </div>
       </div>
-      <div className="grid gap-4">
-        {MOCK_CARDS.map((item) => (
-          <OverlayCard
-            key={item.code}
-            {...item}
-            onClick={() => {}}
-            onSave={() => {}}
-          />
-        ))}
+      <OverlayFilterBar
+        filters={filters}
+        games={games}
+        onGameChange={(event) => setGame(event.target.value)}
+        onPlatformChange={(event) => setPlatform(event.target.value)}
+        onReset={resetFilters}
+        onSelectCategory={(tab) => {
+          setPlatform(tab.platform);
+          setSort(tab.sort);
+        }}
+        onSortChange={(event) => setSort(event.target.value)}
+        platforms={platforms}
+      />
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-[var(--color-text-sub)]">
+          page {filters.page + 1} · size {filters.size}
+        </p>
+        <Button onClick={resetFilters} variant="ghost">
+          Clear Search
+        </Button>
       </div>
+      <OverlayGrid
+        error={error}
+        isLoading={isLoading}
+        items={items}
+        onCardClick={(item) => navigate(`/overlays/${item.id}`)}
+        onRetry={() => {
+          setReloadNonce((value) => value + 1);
+        }}
+        onSave={handleSave}
+      />
     </section>
   );
 }
 
-const MOCK_CARDS = [
-  {
-    name: "Combat Assist Overlay",
-    description: "원형 범위와 선형 가이드가 포함된 전투 보조 오버레이 프리셋입니다.",
-    code: "A1B2C3",
-    platform: { name: "Windows" },
-    game: { displayName: "Minecraft" },
-    author: { name: "MSP Team" },
-    elementTypes: ["Circle", "Line"],
-    savedCount: 24,
-    isSaved: false,
-    updatedAt: "3 days ago",
-  },
-  {
-    name: "Raid Marker Pack",
-    description: "파티 포지셔닝을 빠르게 파악할 수 있게 도형 배치를 정리한 레이드용 프리셋입니다.",
-    code: "Q7W8E9",
-    platform: { name: "Windows" },
-    game: { displayName: "Lost Ark" },
-    author: { name: "OverlayLab" },
-    elementTypes: ["Rect", "Circle", "Line"],
-    savedCount: 63,
-    isSaved: true,
-    updatedAt: "1 day ago",
-  },
-];
+function normalizeOverlayItems(data) {
+  const content = Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
+
+  return content.map((item) => ({
+    ...item,
+    description: item.description ?? "",
+    elementTypes: item.elementTypes ?? [],
+    isSaved: Boolean(item.isSaved),
+    savedCount: item.savedCount ?? 0,
+    updatedAt: formatRelativeDate(item.updatedAt),
+  }));
+}

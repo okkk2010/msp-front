@@ -1,5 +1,6 @@
 # Worklogs
 
+- [2026-04-19_step5-discover-page-and-list-api](./2026-04-19_step5-discover-page-and-list-api.md)
 - [2026-04-19_fix-useauth-syntax-error](./2026-04-19_fix-useauth-syntax-error.md)
 - [2026-04-19_step4-api-model-and-store-foundation](./2026-04-19_step4-api-model-and-store-foundation.md)
 - [2026-04-19_step3-routing-and-access-control](./2026-04-19_step3-routing-and-access-control.md)

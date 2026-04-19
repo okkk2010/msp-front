@@ -1,668 +1,1437 @@
-# AGENTS.md - msp overlay Frontend Routing Guide
-
-## 1. 목적
-
-이 문서는 msp overlay Frontend 작업을 진행하는 AI Agent / 개발자가 가장 먼저 확인해야 하는 최상단 라우팅 문서다.
-
-세부 구현 명세를 모두 담기보다는, 전체 시스템 흐름을 먼저 설명하고 특정 기능을 구현할 때 어떤 명세 파일을 참조해야 하는지 안내한다.
+아래는 지금까지 확정한 내용을 기준으로 정리한 **msp overlay 전체 시스템 명세서 최신본**입니다.
+기준 자료는 기존 상세제안서의 프로젝트 방향, 오버레이 JSON 저장 구조, 백엔드 명세, 전체 시스템 명세를 통합한 버전입니다.    
 
 ---
 
-## 2. 현재 확정된 Frontend 방향
+# msp overlay 전체 시스템 명세서
 
-msp overlay Frontend의 핵심은 JSON 파일 업로드 사이트가 아니다.
+## 1. 문서 목적
 
-```text
-사용자
- → 웹 기반 Overlay Editor에서 레이아웃 생성
- → Frontend가 내부적으로 Overlay JSON 생성
- → Overlay JSON을 Blob으로 변환
- → FormData에 메타데이터, overlayJson, thumbnail을 담음
- → multipart/form-data로 Backend 업로드
- → Backend가 JSON 검증 및 DB/Storage 저장
- → Discover / Detail / Library에서 재사용
-```
+이 문서는 **msp overlay 프로젝트의 전체 시스템 구조를 정의하는 상위 명세서**이다.
 
-확정 사항:
+세부 API, DB 테이블, JSON Schema, Windows 클라이언트, Android 클라이언트, Frontend 구현 내용은 각각의 하위 명세서에서 관리한다.
 
-| 항목 | 확정 내용 |
-|---|---|
-| UI 레퍼런스 | Modrinth Discover content 구조 참고 |
-| 색상 | Modrinth 색상 복사 금지, 다크 배경 + Primary Color 1개 |
-| Editor 방식 | SVG 기반 직접 구현 |
-| 업로드 방식 | multipart/form-data |
-| JSON 처리 | 사용자가 직접 다루는 파일이 아니라 시스템 내부 포맷 |
-| JSON 가져오기/내보내기 | 부가 기능 |
-| 기존 오버레이 편집 | 원본 수정이 아니라 복제 편집 |
-| 6자리 코드 | 자동 생성 + 직접 수정 가능 |
-| 모바일 | 조회 중심, Editor는 PC 우선 |
-| 썸네일 | 1차 MVP 기본 썸네일, 이후 자동 생성 |
+이 문서의 목적은 다음과 같다.
+
+* 전체 시스템의 구조 정리
+* 각 구성 요소의 역할 정의
+* 데이터 흐름 정리
+* MVP 범위 확정
+* 개발자가 어떤 세부 명세서를 참고해야 하는지 안내
 
 ---
 
-## 3. 전체 시스템 구조
+## 2. 프로젝트 개요
+
+**msp overlay**는 3D 그래픽 기반 1인칭·3인칭 게임 플레이 시 발생하는 멀미를 완화하기 위한 오버레이 시스템이다.
+
+게임 화면 위에 평면형 그래픽 오버레이를 출력하여 사용자의 시각적 기준점을 만들고, 화면 전환이나 시점 이동에서 발생하는 입체감·괴리감을 줄이는 것을 목표로 한다.
+
+기존 게임 내 HUD, 조준점, 범용 오버레이 도구는 다음 한계가 있다.
+
+* 게임마다 지원 범위가 다름
+* 멀미 완화 목적성이 약함
+* 사용자별 오버레이 저장/공유 구조가 부족함
+* 플랫폼/게임별 분류가 미흡함
+* Android 환경에서는 Windows와 다른 오버레이 제어 방식이 필요함
+
+따라서 msp overlay는 단순 로컬 프로그램이 아니라, 다음 기능을 하나의 시스템으로 연결한다.
+
+* 오버레이 제작
+* 로컬 저장 및 불러오기
+* 서버 업로드
+* 웹 기반 탐색 및 공유
+* 사용자 라이브러리 저장
+* Windows / Android 클라이언트 적용
+
+---
+
+## 3. 전체 시스템 한 줄 정의
+
+**msp overlay는 오버레이 JSON 원본을 중심으로 Web, Backend, Windows Client, Android Client가 연결되는 멀티플랫폼 오버레이 제작·공유·실행 시스템이다.**
+
+---
+
+## 4. 전체 시스템 구성
 
 ```text
 msp overlay
  ┣ Web Frontend
- ┃ ┣ Discover UI
- ┃ ┣ Overlay Detail UI
- ┃ ┣ Overlay Editor
- ┃ ┣ Library UI
- ┃ ┣ Auth UI
- ┃ ┗ Upload Flow
  ┣ Backend Server
- ┃ ┣ Auth API
- ┃ ┣ Overlay API
- ┃ ┣ Library API
- ┃ ┣ Platform API
- ┃ ┣ Game API
- ┃ ┗ JSON Validation
- ┣ Database
- ┃ ┣ users
- ┃ ┣ platforms
- ┃ ┣ games
- ┃ ┣ overlays
- ┃ ┗ user_libraries
- ┣ File Storage
- ┃ ┣ overlay.json
- ┃ ┗ thumbnail.png
  ┣ Windows Client
- ┗ Android Client
+ ┣ Android Client
+ ┣ Database
+ ┣ File Storage
+ ┗ Overlay JSON Format
 ```
 
-Frontend는 Backend API와 Overlay JSON 포맷을 기준으로 동작한다.
+각 영역은 독립적으로 개발되지만, 공통 기준은 다음 두 가지다.
+
+1. **Overlay JSON Format**
+2. **Backend REST API**
 
 ---
 
-## 4. 작업 라우팅
+# 5. 시스템 구성 요소별 역할
 
-### 프로젝트 초기 세팅
+## 5.1 Web Frontend
 
-참조 파일:
+Web Frontend는 사용자가 오버레이를 탐색하고 관리하는 웹 허브다.
 
-1. `16_project_file_structure.md`
-2. `17_implementation_order.md`
-3. `01_design_system.md`
-4. `14_auth_routes_access.md`
+### 주요 역할
 
-작업 내용:
+* 오버레이 목록 조회
+* 6자리 코드 검색
+* 플랫폼 / 게임 기준 필터링
+* 오버레이 상세 조회
+* 오버레이 업로드
+* 내 라이브러리 저장
+* 내 라이브러리 조회
+* Google 로그인 진입
+* 로그인 상태 기반 UI 제어
 
-- Vite React 프로젝트 생성
-- Tailwind CSS v4 설정
-- 라우터 구성
-- 기본 Layout 구성
-- Axios 인스턴스 구성
-- 폴더 구조 생성
-
-### UI 디자인 시스템
-
-참조 파일:
-
-1. `01_design_system.md`
-2. `02_header_navigation.md`
-3. `05_overlay_card_component.md`
-
-작업 내용:
-
-- 다크 테마 색상 정의
-- Primary Color 정의
-- 카드 / 버튼 / 입력창 / 배지 스타일 정의
-- Header 네비게이션 구현
-
-### Home Page
-
-참조 파일:
-
-1. `03_home_page.md`
-2. `01_design_system.md`
-3. `14_auth_routes_access.md`
-
-### Discover / Overlay List
-
-참조 파일:
-
-1. `04_discover_overlay_list_page.md`
-2. `05_overlay_card_component.md`
-3. `15_api_contract_front.md`
-4. `18_front_data_model.md`
-5. `19_front_api_mapping.md`
-6. `20_front_state_management.md`
-
-작업 내용:
-
-- 검색창
-- 코드 검색
-- 플랫폼 / 게임 필터
-- 정렬
-- OverlayCard 목록
-- 로딩 / 에러 / 빈 상태
-- GET `/api/overlays` 연동
-
-### Overlay Detail
-
-참조 파일:
-
-1. `06_overlay_detail_page.md`
-2. `18_front_data_model.md`
-3. `19_front_api_mapping.md`
-4. `20_front_state_management.md`
-
-작업 내용:
-
-- 상세 정보 조회
-- JSON 요약 정보 표시
-- Save to Library
-- Use as Template
-- GET `/api/overlays/{id}` 연동
-- POST `/api/library` 연동
-
-### Library
-
-참조 파일:
-
-1. `07_library_page.md`
-2. `12_library_components_utils.md`
-3. `18_front_data_model.md`
-4. `19_front_api_mapping.md`
-5. `20_front_state_management.md`
-
-### Auth
-
-참조 파일:
-
-1. `14_auth_routes_access.md`
-2. `19_front_api_mapping.md`
-3. `20_front_state_management.md`
-
-### Overlay Editor
-
-참조 파일:
-
-1. `08_editor_page_structure.md`
-2. `09_editor_canvas_svg.md`
-3. `10_editor_toolbar_panels.md`
-4. `11_editor_state_json.md`
-5. `18_front_data_model.md`
-6. `20_front_state_management.md`
-7. `21_editor_data_flow.md`
-
-### Overlay JSON 변환 / 가져오기 / 내보내기
-
-참조 파일:
-
-1. `11_editor_state_json.md`
-2. `13_json_import_export.md`
-3. `18_front_data_model.md`
-4. `21_editor_data_flow.md`
-
-### 서버 업로드
-
-참조 파일:
-
-1. `12_upload_multipart.md`
-2. `19_front_api_mapping.md`
-3. `22_upload_formdata_mapping.md`
-4. `21_editor_data_flow.md`
-
----
-
-## 5. 파일별 역할 인덱스
-
-| 파일 | 역할 |
-|---|---|
-| `AGENTS.md` | 전체 작업 라우팅 문서 |
-| `00_system_ui_structure.md` | UI 관점의 전체 시스템 구조 |
-| `01_design_system.md` | 색상, 버튼, 카드, 배지 등 디자인 시스템 |
-| `02_header_navigation.md` | Header / Navigation 구조 |
-| `03_home_page.md` | HomePage UI 명세 |
-| `04_discover_overlay_list_page.md` | Discover / OverlayListPage UI 명세 |
-| `05_overlay_card_component.md` | OverlayCard 컴포넌트 명세 |
-| `06_overlay_detail_page.md` | OverlayDetailPage UI 명세 |
-| `07_library_page.md` | LibraryPage UI 명세 |
-| `08_editor_page_structure.md` | Editor 전체 화면 구조 |
-| `09_editor_canvas_svg.md` | SVG Canvas 구현 명세 |
-| `10_editor_toolbar_panels.md` | Toolbar / Property / Layer Panel 명세 |
-| `11_editor_state_json.md` | Editor State와 Overlay JSON 관계 |
-| `12_upload_multipart.md` | multipart/form-data 업로드 UI 중심 명세 |
-| `13_json_import_export.md` | JSON 가져오기 / 내보내기 |
-| `14_auth_routes_access.md` | 인증, 라우트 접근 제어 |
-| `15_api_contract_front.md` | Front에서 사용하는 API 개요 |
-| `16_project_file_structure.md` | React 프로젝트 폴더 구조 |
-| `17_implementation_order.md` | 구현 순서 |
-| `18_front_data_model.md` | Front 데이터 모델 / DTO 타입 |
-| `19_front_api_mapping.md` | API 요청/응답 매핑 상세 |
-| `20_front_state_management.md` | Zustand/Store 상태 관리 명세 |
-| `21_editor_data_flow.md` | Editor 기능별 데이터 흐름 |
-| `22_upload_formdata_mapping.md` | editorState → FormData 전송 규칙 |
-
----
-
-## 6. 작업 원칙
-
-1. UI만 보고 구현하지 말고 데이터 명세와 함께 확인한다.
-2. Editor에서 생성되는 데이터는 항상 Overlay JSON 구조와 동기화되어야 한다.
-3. 서버 업로드는 현재 Backend 구현에 맞춰 multipart/form-data를 사용한다.
-4. 사용자가 JSON을 직접 업로드하는 흐름은 메인 기능이 아니다.
-5. JSON 가져오기/내보내기는 고급 기능 또는 백업 기능으로 둔다.
-6. 기존 오버레이를 수정할 때는 원본 수정이 아니라 복제 편집을 기본 정책으로 한다.
-7. 모바일에서는 Discover / Detail / Library 중심으로 대응하고, Editor는 PC 우선으로 구현한다.
-
----
-
-## 7. 권장 작업 진행 순서
-
-아래 순서는 현재 확정된 Frontend 구조를 기준으로 한 실제 구현 우선순위다.  
-Agent는 이 순서를 기본값으로 따르되, 사용자가 특정 기능을 명시하면 해당 기능 라우팅을 우선한다.
+### 기술 스택
 
 ```text
-1. 프로젝트 기반 세팅
-2. 공통 UI / 디자인 시스템
-3. 라우팅 / 레이아웃 / 인증 접근 제어
-4. API 클라이언트 / 데이터 모델 / 상태 관리 골격
-5. Discover 목록 페이지
-6. Overlay 상세 페이지
-7. Library 페이지
-8. Editor 기본 화면 구조
-9. SVG Canvas와 도형 렌더링
-10. Editor 도형 조작 기능
-11. Editor State → Overlay JSON 변환
-12. JSON 가져오기 / 내보내기
-13. multipart/form-data 업로드
-14. 인증 연동과 보호 라우트 마감
-15. UX 안정화 / 반응형 / 에러 처리
+React
+Vite
+Tailwind CSS v4
+Axios
+React Router
 ```
 
----
-
-## 8. 단계별 작업 계획
-
-### 1단계. 프로젝트 기반 세팅
-
-참조 파일:
-
-1. `16_project_file_structure.md`
-2. `17_implementation_order.md`
-3. `01_design_system.md`
-
-작업 내용:
-
-- Vite + React 프로젝트 생성
-- Tailwind CSS v4 설정
-- 기본 폴더 구조 생성
-- 환경 변수 구조 생성
-- ESLint / Prettier 적용 여부 확인
-- 기본 실행 확인
-
-완료 기준:
-
-- `npm run dev`로 프로젝트가 정상 실행된다.
-- 기본 페이지가 브라우저에 표시된다.
-- Tailwind 클래스가 정상 적용된다.
-
----
-
-### 2단계. 공통 UI / 디자인 시스템 구축
-
-참조 파일:
-
-1. `01_design_system.md`
-2. `02_header_navigation.md`
-3. `05_overlay_card_component.md`
-
-작업 내용:
-
-- 다크 테마 색상 변수 정의
-- Primary Color 기준 버튼 스타일 정의
-- 카드, 배지, 입력창, 셀렉트, 모달, 토스트 기본 컴포넌트 생성
-- Header / Navigation 기본 UI 구현
-
-완료 기준:
-
-- 주요 공통 컴포넌트가 재사용 가능한 형태로 존재한다.
-- Discover / Detail / Editor에서 동일한 색상과 컴포넌트 스타일을 사용할 수 있다.
-
----
-
-### 3단계. 라우팅 / 레이아웃 / 접근 제어
-
-참조 파일:
-
-1. `02_header_navigation.md`
-2. `14_auth_routes_access.md`
-3. `16_project_file_structure.md`
-
-작업 내용:
-
-- React Router 구성
-- `AppLayout` 생성
-- `ProtectedRoute` 생성
-- 주요 페이지 라우트 연결
-- 비로그인 접근 제한 정책 적용
-
-대상 라우트:
+### 주요 화면
 
 ```text
 /
-/overlays
-/overlays/:id
-/editor
-/editor/:id
-/library
-/login/callback
-/not-found
+ ┣ 홈 / 오버레이 목록
+ ┣ 오버레이 상세
+ ┣ 오버레이 업로드
+ ┣ 내 라이브러리
+ ┣ 로그인
+ ┗ 마이페이지 또는 설정
 ```
 
-완료 기준:
+### 참고 문서
 
-- 각 URL 접근 시 올바른 페이지 컴포넌트가 표시된다.
-- `/editor`, `/library`는 로그인 필요 라우트로 분리된다.
-
----
-
-### 4단계. API 클라이언트 / 데이터 모델 / 상태 관리 골격
-
-참조 파일:
-
-1. `18_front_data_model.md`
-2. `19_front_api_mapping.md`
-3. `20_front_state_management.md`
-4. `15_api_contract_front.md`
-
-작업 내용:
-
-- Axios Instance 생성
-- API 모듈 분리
-- Front 데이터 타입 또는 JSDoc 구조 정리
-- `authStore`, `overlayFilterStore`, `editorStore`, `toastStore` 생성
-- 공통 에러 처리 기준 생성
-
-완료 기준:
-
-- API 호출 함수가 페이지 코드와 분리되어 있다.
-- 목록, 상세, 라이브러리, 업로드에서 같은 API 레이어를 재사용할 수 있다.
+```text
+msp_overlay_frontend_spec.md
+msp_overlay_ui_reference.md
+msp_overlay_api_contract.md
+```
 
 ---
 
-### 5단계. Discover / Overlay List 구현
+## 5.2 Backend Server
 
-참조 파일:
+Backend Server는 전체 시스템의 중심 데이터 허브다.
 
-1. `04_discover_overlay_list_page.md`
-2. `05_overlay_card_component.md`
-3. `18_front_data_model.md`
-4. `19_front_api_mapping.md`
-5. `20_front_state_management.md`
+### 주요 역할
 
-작업 내용:
+* 사용자 인증 및 계정 관리
+* Google OAuth 기반 로그인
+* JWT 기반 인증 처리
+* 오버레이 메타데이터 관리
+* 오버레이 JSON 원본 저장 및 검증
+* 플랫폼 / 게임 카테고리 관리
+* 사용자 라이브러리 관리
+* Web / Windows / Android 공통 REST API 제공
 
-- Discover 페이지 레이아웃 구현
-- 검색창 구현
-- 6자리 코드 검색 구현
-- 플랫폼 / 게임 필터 구현
-- 정렬 UI 구현
-- OverlayCard 목록 구현
-- 로딩 / 에러 / 빈 상태 처리
-- `GET /api/overlays` 연동
+### 기술 스택
 
-완료 기준:
+```text
+Java
+Spring Boot
+Spring Data JPA
+Spring Security
+JWT
+PostgreSQL
+Docker
+Docker Compose
+```
 
-- 서버에서 받은 오버레이 목록이 카드 형태로 표시된다.
-- 검색과 필터 값이 API Query Parameter로 연결된다.
+### 개발 도구
 
----
+```text
+IntelliJ
+Postman
+DBeaver
+GitHub
+GitHub Desktop
+```
 
-### 6단계. Overlay Detail 구현
+### 참고 문서
 
-참조 파일:
-
-1. `06_overlay_detail_page.md`
-2. `18_front_data_model.md`
-3. `19_front_api_mapping.md`
-4. `13_json_import_export.md`
-
-작업 내용:
-
-- 상세 페이지 레이아웃 구현
-- 오버레이 메타데이터 표시
-- JSON 요약 정보 표시
-- element 타입 요약 표시
-- `Save to Library` 버튼 구현
-- `Use as Template` 버튼 구현
-- `GET /api/overlays/{id}` 연동
-- `POST /api/library` 연동
-
-완료 기준:
-
-- 특정 오버레이 상세 정보를 확인할 수 있다.
-- 저장 버튼과 복제 편집 진입 버튼이 동작한다.
+```text
+msp_overlay_backend_spec.md
+msp_overlay_api_contract.md
+msp_overlay_db_spec.md
+msp_overlay_json_schema_spec.md
+msp_overlay_storage_spec.md
+```
 
 ---
 
-### 7단계. Library 페이지 구현
+## 5.3 Windows Client
 
-참조 파일:
+Windows Client는 오버레이 제작과 실제 실행을 담당하는 핵심 클라이언트다.
 
-1. `07_library_page.md`
-2. `12_library_components_utils.md`
-3. `18_front_data_model.md`
-4. `19_front_api_mapping.md`
+### 주요 역할
 
-작업 내용:
+* 실행 중인 게임 또는 프로그램 창 추적
+* 창 위치와 크기에 맞춰 오버레이 출력
+* 오버레이 편집
+* 로컬 `overlay.json` 저장
+* 로컬 `overlay.json` 불러오기
+* 썸네일 생성
+* 서버 업로드
+* 내 라이브러리 오버레이 다운로드
+* JSON 기반 오버레이 렌더링
+* Remote Control UI 제공
+* 설정창 제공
+* 핫키 설정 제공
 
-- 내 라이브러리 페이지 구현
-- 저장한 OverlayCard 목록 표시
-- 저장일 / 플랫폼 / 게임 정보 표시
-- 상세 이동 구현
-- 복제 편집 이동 구현
-- `GET /api/library` 연동
+### 기술 스택
 
-완료 기준:
+```text
+C#
+.NET
+Windows Forms 또는 WPF
+Visual Studio
+```
 
-- 로그인 사용자가 저장한 오버레이를 조회할 수 있다.
+### 주요 모듈
 
----
+```text
+Windows Client
+ ┣ Overlay Editor
+ ┣ Overlay Renderer
+ ┣ Overlay Serializer
+ ┣ Target Window Tracker
+ ┣ Remote Control UI
+ ┣ Hotkey Manager
+ ┣ Local File Manager
+ ┗ Server Sync Module
+```
 
-### 8단계. Editor 기본 화면 구조 구현
+### 기본 핫키
 
-참조 파일:
+현재 확정 기준:
 
-1. `08_editor_page_structure.md`
-2. `10_editor_toolbar_panels.md`
-3. `11_editor_state_json.md`
-4. `20_front_state_management.md`
+```text
+ALT + SHIFT + S
+→ 현재 포커스된 게임 또는 대상 창의 오버레이 토글
+```
 
-작업 내용:
+기존에 언급되었던 `ALT + SHIFT + A` 전체 오버레이 종료는 현재 구조에서는 제외한다.
+이유는 msp overlay가 기본적으로 백그라운드에서 실행되며, 특정 게임 또는 대상 창 단위로 오버레이가 개별 생성·종료되는 구조이기 때문이다.
 
-- Editor 3단 레이아웃 구성
-- 좌측 Toolbar 구현
-- 중앙 Canvas 영역 구현
-- 우측 Property Panel 구현
-- Meta Panel 구현
-- Bottom Action Bar 구현
-- editorStore 초기 상태 연결
+### 참고 문서
 
-완료 기준:
-
-- Editor 화면이 제작 도구 형태로 구성된다.
-- 기본 메타 정보와 캔버스 정보가 상태로 관리된다.
-
----
-
-### 9단계. SVG Canvas와 도형 렌더링
-
-참조 파일:
-
-1. `09_editor_canvas_svg.md`
-2. `11_editor_state_json.md`
-3. `21_editor_data_flow.md`
-
-작업 내용:
-
-- SVG Canvas 구현
-- rect 렌더링
-- circle 렌더링
-- line 렌더링
-- zIndex 기준 렌더링 순서 적용
-- visible / locked 기본 처리
-- 선택된 요소 표시
-
-완료 기준:
-
-- editorStore의 elements 배열이 SVG 화면에 정확히 표시된다.
+```text
+msp_overlay_windows_client_spec.md
+msp_overlay_json_schema_spec.md
+msp_overlay_api_contract.md
+```
 
 ---
 
-### 10단계. Editor 도형 조작 기능 구현
+## 5.4 Android Client
 
-참조 파일:
+Android Client는 모바일 환경에서 전체 화면 기준 오버레이를 출력하는 클라이언트다.
 
-1. `09_editor_canvas_svg.md`
-2. `10_editor_toolbar_panels.md`
-3. `21_editor_data_flow.md`
+### 주요 역할
 
-작업 내용:
+* 전체 화면 기준 오버레이 출력
+* Notification 기반 오버레이 ON/OFF 제어
+* 서버 라이브러리 조회
+* 오버레이 다운로드
+* JSON 기반 오버레이 렌더링
+* Android 권한 처리
 
-- 도형 추가
-- 도형 선택
-- 도형 이동
-- 도형 삭제
-- zIndex 앞으로 / 뒤로
-- 속성 패널 값 수정
-- 색상 / 투명도 / strokeWidth 수정
+Android는 Windows처럼 특정 창을 추적하지 않는다.
+모바일 환경에서는 실행 중인 앱 추적보다 **전체 화면 기준 오버레이 출력**이 더 현실적이다.
 
-완료 기준:
+### 기술 스택
 
-- 사용자가 웹 에디터에서 기본 오버레이 레이아웃을 제작할 수 있다.
+```text
+Java
+Android Studio
+Gradle
+```
 
----
+### 참고 문서
 
-### 11단계. Editor State → Overlay JSON 변환
-
-참조 파일:
-
-1. `11_editor_state_json.md`
-2. `18_front_data_model.md`
-3. `21_editor_data_flow.md`
-
-작업 내용:
-
-- `overlayJsonBuilder` 구현
-- `overlayJsonValidator` 구현
-- `schemaVersion`, `overlayId`, `meta.createdAt`, `meta.updatedAt` 처리
-- Editor 상태와 Overlay JSON 필드 매핑
-- 업로드 전 JSON 검증
-
-완료 기준:
-
-- 에디터에서 만든 데이터가 확정된 Overlay JSON 구조로 변환된다.
-- 잘못된 JSON 구조는 업로드 전에 차단된다.
+```text
+msp_overlay_android_client_spec.md
+msp_overlay_json_schema_spec.md
+msp_overlay_api_contract.md
+```
 
 ---
 
-### 12단계. JSON 가져오기 / 내보내기 구현
+## 5.5 Database
 
-참조 파일:
+Database는 검색, 권한, 라이브러리, 카테고리 관리를 위한 구조화 데이터를 저장한다.
 
-1. `13_json_import_export.md`
-2. `11_editor_state_json.md`
-3. `21_editor_data_flow.md`
+### 주요 저장 대상
 
-작업 내용:
+* 사용자 정보
+* 플랫폼 정보
+* 게임 정보
+* 오버레이 메타데이터
+* 사용자 라이브러리 매핑
+* DB 기준 생성/수정 시각
 
-- 현재 Editor 상태를 `overlay.json`으로 다운로드
-- `overlay.json` 파일 선택
-- FileReader로 JSON 파싱
-- JSON 검증 후 Editor 상태 복원
-- 잘못된 JSON 오류 표시
+### DBMS
 
-완료 기준:
+```text
+PostgreSQL
+```
 
-- 사용자가 JSON을 백업하거나 기존 JSON을 에디터에 불러올 수 있다.
-- 이 기능은 메인이 아니라 보조 기능으로 유지된다.
+### 주요 테이블
 
----
+```text
+users
+platforms
+games
+overlays
+user_libraries
+```
 
-### 13단계. multipart/form-data 업로드 구현
+### 참고 문서
 
-참조 파일:
-
-1. `12_upload_multipart.md`
-2. `22_upload_formdata_mapping.md`
-3. `19_front_api_mapping.md`
-4. `21_editor_data_flow.md`
-
-작업 내용:
-
-- Editor 상태에서 Overlay JSON 생성
-- Overlay JSON을 Blob으로 변환
-- FormData 생성
-- `name`, `description`, `code`, `platform`, `gameId`, `overlayJson`, `thumbnail` append
-- `POST /api/overlays` 호출
-- 업로드 성공 시 상세 페이지 이동
-- 업로드 실패 시 에러 표시
-
-완료 기준:
-
-- 사용자가 JSON 파일을 직접 업로드하지 않아도, 에디터 결과가 서버에 multipart/form-data로 저장된다.
+```text
+msp_overlay_db_spec.md
+msp_overlay_backend_spec.md
+```
 
 ---
 
-### 14단계. 인증 연동 마감
+## 5.6 File Storage
 
-참조 파일:
+File Storage는 실제 오버레이 원본 파일과 썸네일을 저장한다.
 
-1. `14_auth_routes_access.md`
-2. `19_front_api_mapping.md`
-3. `20_front_state_management.md`
+### 저장 대상
 
-작업 내용:
+```text
+overlay.json
+thumbnail.png
+```
 
-- Google 로그인 진입 버튼 연결
-- 로그인 콜백 처리
-- `GET /api/auth/me` 연결
-- 로그인 상태 유지 정책 적용
-- 로그아웃 처리
-- 로그인 필요 기능 UX 정리
+MVP 단계에서는 JSON 원문을 DB에 저장하는 방식도 가능하다.
+다만 장기적으로는 다음 구조가 더 적합하다.
 
-완료 기준:
+```text
+DB
+ → 검색용 메타데이터 저장
 
-- 로그인 사용자만 Editor / Library / Upload 기능을 사용할 수 있다.
+File Storage
+ → overlay.json
+ → thumbnail.png
+```
 
----
+### 참고 문서
 
-### 15단계. UX 안정화 / 반응형 / 에러 처리
-
-참조 파일:
-
-1. `01_design_system.md`
-2. `04_discover_overlay_list_page.md`
-3. `08_editor_page_structure.md`
-4. `14_auth_routes_access.md`
-
-작업 내용:
-
-- Toast 메시지 정리
-- Loading 상태 정리
-- Empty 상태 정리
-- API 에러 코드별 메시지 정리
-- Desktop / Tablet / Mobile 반응형 정리
-- 모바일에서는 Editor 제한 안내
-
-완료 기준:
-
-- 사용자가 주요 기능을 진행할 때 막히는 지점마다 명확한 안내가 표시된다.
-- Discover / Detail / Library는 모바일에서도 조회 가능하다.
-- Editor는 PC 우선 정책에 맞게 동작한다.
+```text
+msp_overlay_storage_spec.md
+msp_overlay_json_schema_spec.md
+msp_overlay_backend_spec.md
+```
 
 ---
 
-## 9. Agent 작업 시 우선순위 규칙
+## 5.7 Overlay JSON Format
 
-1. 사용자가 특정 기능을 지시하지 않았다면 `7. 권장 작업 진행 순서`를 따른다.
-2. 화면을 구현할 때는 UI 명세 파일과 데이터/API 명세 파일을 함께 확인한다.
-3. Editor 관련 작업은 반드시 `11_editor_state_json.md`, `21_editor_data_flow.md`, `22_upload_formdata_mapping.md`를 함께 확인한다.
-4. 업로드 작업은 `multipart/form-data` 기준을 변경하지 않는다.
-5. JSON 직접 업로드를 메인 플로우로 만들지 않는다.
-6. Modrinth 참고 구조는 Discover/List/Card 계열에만 적용하고, Editor에는 적용하지 않는다.
-7. 구현 중 명세에 없는 필드를 임의로 추가하지 않는다. 필요한 경우 별도 TODO로 남긴다.
+Overlay JSON은 msp overlay의 핵심 데이터 포맷이다.
+
+서버는 업로드 시 이 JSON 구조를 검증해야 하며, Windows / Android 클라이언트는 이 JSON을 기반으로 실제 오버레이를 렌더링한다.
+
+### 현재 MVP 기준 주요 필드
+
+```text
+schemaVersion
+overlayId
+name
+platform
+game
+canvas
+overlaySettings
+elements
+meta
+```
+
+### 현재 지원 요소
+
+```text
+rect
+circle
+line
+```
+
+### 현재 제외 요소
+
+```text
+image
+text
+```
+
+### 참고 문서
+
+```text
+msp_overlay_json_schema_spec.md
+msp_overlay_windows_client_spec.md
+msp_overlay_android_client_spec.md
+msp_overlay_backend_spec.md
+```
+
+---
+
+# 6. Overlay JSON 명세
+
+## 6.1 저장 단위
+
+오버레이 1개는 기본적으로 아래 단위로 저장한다.
+
+```text
+overlay.json
+thumbnail.png
+```
+
+현재 기준에서는 `image` 요소를 지원하지 않으므로 `assets` 폴더는 제외한다.
+
+---
+
+## 6.2 JSON 최상위 구조
+
+```json
+{
+  "schemaVersion": "1.0.0",
+  "overlayId": "ovl_001",
+  "name": "Minecraft Center Focus",
+  "platform": "windows",
+  "game": {
+    "id": "minecraft",
+    "name": "Minecraft"
+  },
+  "canvas": {
+    "baseWidth": 1920,
+    "baseHeight": 1080
+  },
+  "overlaySettings": {
+    "opacity": 0.85
+  },
+  "elements": [],
+  "meta": {
+    "createdAt": "2026-04-15T19:30:00+09:00",
+    "updatedAt": "2026-04-15T19:45:00+09:00"
+  }
+}
+```
+
+---
+
+## 6.3 최상위 필드
+
+| 필드                |     타입 | 필수 | 설명               |
+| ----------------- | -----: | -: | ---------------- |
+| `schemaVersion`   | string |  Y | JSON 구조 버전       |
+| `overlayId`       | string |  Y | 오버레이 고유 ID       |
+| `name`            | string |  Y | 오버레이 이름          |
+| `platform`        | string |  Y | 적용 플랫폼           |
+| `game`            | object |  N | 게임 분류 정보         |
+| `canvas`          | object |  Y | 기준 해상도 정보        |
+| `overlaySettings` | object |  Y | 오버레이 전체 설정       |
+| `elements`        |  array |  Y | 오버레이 요소 목록       |
+| `meta`            | object |  Y | JSON 파일 생성/수정 정보 |
+
+---
+
+## 6.4 platform 허용값
+
+```text
+windows
+android
+```
+
+---
+
+## 6.5 canvas
+
+```json
+"canvas": {
+  "baseWidth": 1920,
+  "baseHeight": 1080
+}
+```
+
+| 필드           |     타입 | 필수 | 설명       |
+| ------------ | -----: | -: | -------- |
+| `baseWidth`  | number |  Y | 편집 기준 너비 |
+| `baseHeight` | number |  Y | 편집 기준 높이 |
+
+현재는 다음 항목을 제외한다.
+
+```text
+scaleMode
+unit
+origin
+```
+
+---
+
+## 6.6 overlaySettings
+
+```json
+"overlaySettings": {
+  "opacity": 0.85
+}
+```
+
+| 필드        |     타입 | 필수 |        범위 | 설명          |
+| --------- | -----: | -: | --------: | ----------- |
+| `opacity` | number |  Y | 0.0 ~ 1.0 | 오버레이 전체 투명도 |
+
+현재 JSON에서 제외하는 실행 정책:
+
+```text
+visible
+clickThrough
+followTargetWindow
+showOnlyWhenTargetFocused
+alwaysOnTop
+anchorPreset
+offsetX
+offsetY
+```
+
+위 항목들은 JSON 저장 데이터가 아니라 클라이언트 실행 정책으로 관리한다.
+
+---
+
+## 6.7 elements
+
+현재 지원 요소는 다음 3개다.
+
+```text
+rect
+circle
+line
+```
+
+지원 제외:
+
+```text
+image
+text
+```
+
+---
+
+### 6.7.1 rect
+
+```json
+{
+  "id": "el_001",
+  "type": "rect",
+  "x": 860,
+  "y": 490,
+  "width": 200,
+  "height": 100,
+  "rotation": 0,
+  "opacity": 0.6,
+  "zIndex": 1,
+  "visible": true,
+  "locked": false,
+  "fillColor": "#000000",
+  "strokeColor": "#FFFFFF",
+  "strokeWidth": 2,
+  "cornerRadius": 12
+}
+```
+
+### rect 필드
+
+```text
+id
+type
+x
+y
+width
+height
+rotation
+opacity
+zIndex
+visible
+locked
+fillColor
+strokeColor
+strokeWidth
+cornerRadius
+```
+
+---
+
+### 6.7.2 circle
+
+```json
+{
+  "id": "el_002",
+  "type": "circle",
+  "x": 910,
+  "y": 490,
+  "width": 100,
+  "height": 100,
+  "rotation": 0,
+  "opacity": 0.7,
+  "zIndex": 2,
+  "visible": true,
+  "locked": false,
+  "fillColor": "#000000",
+  "strokeColor": "#FFFFFF",
+  "strokeWidth": 2
+}
+```
+
+### circle 필드
+
+```text
+id
+type
+x
+y
+width
+height
+rotation
+opacity
+zIndex
+visible
+locked
+fillColor
+strokeColor
+strokeWidth
+```
+
+---
+
+### 6.7.3 line
+
+```json
+{
+  "id": "el_003",
+  "type": "line",
+  "x1": 500,
+  "y1": 500,
+  "x2": 700,
+  "y2": 500,
+  "opacity": 1.0,
+  "zIndex": 3,
+  "visible": true,
+  "locked": false,
+  "strokeColor": "#FFFFFF",
+  "strokeWidth": 3,
+  "dashStyle": "solid"
+}
+```
+
+### line 필드
+
+```text
+id
+type
+x1
+y1
+x2
+y2
+opacity
+zIndex
+visible
+locked
+strokeColor
+strokeWidth
+dashStyle
+```
+
+### dashStyle 허용값
+
+```text
+solid
+dash
+dot
+```
+
+---
+
+## 6.8 meta
+
+```json
+"meta": {
+  "createdAt": "2026-04-15T19:30:00+09:00",
+  "updatedAt": "2026-04-15T19:45:00+09:00"
+}
+```
+
+| 필드          |     타입 | 필수 | 설명               |
+| ----------- | -----: | -: | ---------------- |
+| `createdAt` | string |  Y | JSON 파일 최초 생성 시각 |
+| `updatedAt` | string |  Y | JSON 파일 최종 수정 시각 |
+
+형식은 ISO-8601을 사용한다.
+
+---
+
+# 7. DB 설계 개요
+
+## 7.1 DB 저장 원칙
+
+오버레이 데이터는 두 층으로 나눈다.
+
+```text
+DB
+ → 검색 / 권한 / 라이브러리 / 카테고리용 구조화 데이터
+
+JSON
+ → 실제 렌더링 가능한 오버레이 원본 데이터
+```
+
+즉, DB는 오버레이를 그리는 데 필요한 모든 element를 세부 테이블로 쪼개지 않는다.
+MVP에서는 **JSON 원문 저장 + 메타데이터 분리** 구조가 적합하다.
+
+---
+
+## 7.2 주요 테이블
+
+```text
+users
+platforms
+games
+overlays
+user_libraries
+```
+
+---
+
+## 7.3 users
+
+Google OAuth 기반 사용자 정보 저장.
+
+### 주요 필드
+
+```text
+id
+oauth_provider
+oauth_provider_user_id
+email
+name
+profile_image_url
+created_at
+updated_at
+```
+
+### 제약
+
+```text
+(oauth_provider, oauth_provider_user_id) unique
+```
+
+---
+
+## 7.4 platforms
+
+오버레이 대상 플랫폼 저장.
+
+### 초기 데이터
+
+```text
+Windows / windows
+Android / android
+```
+
+### 주요 필드
+
+```text
+id
+name
+slug
+is_active
+created_at
+updated_at
+```
+
+---
+
+## 7.5 games
+
+플랫폼별 게임 카테고리 저장.
+
+### 주요 필드
+
+```text
+id
+platform_id
+slug
+display_name
+is_active
+created_at
+updated_at
+```
+
+### 예시
+
+```text
+minecraft
+valorant
+overwatch
+pubg-mobile
+```
+
+---
+
+## 7.6 overlays
+
+오버레이 메타데이터와 JSON 참조 정보를 저장하는 핵심 테이블.
+
+### 주요 필드
+
+```text
+id
+overlay_id
+code
+name
+description
+platform_id
+game_id
+author_user_id
+schema_version
+canvas_base_width
+canvas_base_height
+opacity
+json_content
+json_path
+thumbnail_url
+created_at
+updated_at
+```
+
+### 설명
+
+| 필드              | 설명                 |
+| --------------- | ------------------ |
+| `overlay_id`    | JSON 내부의 overlayId |
+| `code`          | 웹 검색용 6자리 코드       |
+| `json_content`  | JSON 원문 저장         |
+| `json_path`     | JSON 파일 저장 경로      |
+| `thumbnail_url` | 썸네일 경로             |
+| `created_at`    | DB 레코드 생성 시각       |
+| `updated_at`    | DB 레코드 수정 시각       |
+
+---
+
+## 7.7 user_libraries
+
+사용자가 저장한 오버레이 목록.
+
+### 주요 필드
+
+```text
+id
+user_id
+overlay_id
+created_at
+```
+
+### 제약
+
+```text
+(user_id, overlay_id) unique
+```
+
+---
+
+# 8. 날짜 저장 기준
+
+JSON과 DB 모두 날짜를 가진다.
+하지만 의미가 다르다.
+
+## 8.1 JSON 날짜
+
+```text
+meta.createdAt
+meta.updatedAt
+```
+
+의미:
+
+```text
+오버레이 파일 자체의 생성/수정 시각
+```
+
+## 8.2 DB 날짜
+
+```text
+created_at
+updated_at
+```
+
+의미:
+
+```text
+서버 DB 레코드의 생성/수정 시각
+```
+
+## 8.3 예시
+
+사용자가 다음 흐름으로 작업했다고 가정한다.
+
+```text
+4월 1일 로컬에서 오버레이 생성
+4월 10일 로컬에서 오버레이 수정
+4월 15일 서버 업로드
+```
+
+이 경우:
+
+```text
+JSON meta.createdAt = 4월 1일
+JSON meta.updatedAt = 4월 10일
+DB created_at = 4월 15일
+DB updated_at = 4월 15일
+```
+
+---
+
+# 9. Backend API 개요
+
+## 9.1 인증 API
+
+```text
+GET /api/auth/me
+```
+
+현재 로그인한 사용자 정보를 조회한다.
+
+---
+
+## 9.2 플랫폼 API
+
+```text
+GET /api/platforms
+```
+
+플랫폼 목록을 조회한다.
+
+---
+
+## 9.3 게임 API
+
+```text
+GET /api/games?platform=windows
+```
+
+플랫폼별 게임 목록을 조회한다.
+
+---
+
+## 9.4 오버레이 목록 API
+
+```text
+GET /api/overlays
+```
+
+### 쿼리 파라미터
+
+```text
+page
+size
+code
+keyword
+platform
+game
+```
+
+### 반환 주요 정보
+
+```text
+id
+overlayId
+code
+name
+description
+platform
+game
+thumbnailUrl
+author
+isSaved
+createdAt
+updatedAt
+```
+
+---
+
+## 9.5 오버레이 상세 API
+
+```text
+GET /api/overlays/{id}
+```
+
+### 반환 주요 정보
+
+```text
+metadata
+overlay json
+isSaved
+```
+
+---
+
+## 9.6 오버레이 업로드 API
+
+```text
+POST /api/overlays
+```
+
+### 권한
+
+```text
+로그인 필요
+```
+
+### 입력 방식
+
+```text
+multipart/form-data
+```
+
+### 입력 필드
+
+```text
+name
+description
+platform
+gameId 또는 game
+code
+overlayJson
+thumbnail
+```
+
+### 서버 처리 순서
+
+```text
+1. 로그인 사용자 확인
+2. code 중복 검사
+3. 플랫폼 / 게임 유효성 검사
+4. JSON 구조 검증
+5. 메타데이터 추출
+6. JSON 저장
+7. 썸네일 저장
+8. DB 저장
+```
+
+---
+
+## 9.7 라이브러리 저장 API
+
+```text
+POST /api/library
+```
+
+### 권한
+
+```text
+로그인 필요
+```
+
+### 처리
+
+```text
+1. 로그인 사용자 확인
+2. 대상 overlay 존재 확인
+3. 중복 저장 여부 확인
+4. user_libraries 저장
+```
+
+---
+
+## 9.8 라이브러리 조회 API
+
+```text
+GET /api/library
+```
+
+로그인한 사용자의 저장 오버레이 목록을 조회한다.
+
+---
+
+# 10. JSON 검증 규칙
+
+## 10.1 필수 검증 항목
+
+```text
+schemaVersion 존재 여부
+overlayId 존재 여부
+name 존재 여부
+platform 존재 여부
+canvas.baseWidth 존재 여부
+canvas.baseHeight 존재 여부
+overlaySettings.opacity 존재 여부
+elements 배열 여부
+meta.createdAt 존재 여부
+meta.updatedAt 존재 여부
+```
+
+---
+
+## 10.2 값 검증
+
+```text
+platform은 windows 또는 android만 허용
+opacity는 0.0 ~ 1.0
+elements[].type은 rect, circle, line만 허용
+schemaVersion은 지원 버전만 허용
+code는 6자리 규칙 만족
+```
+
+---
+
+## 10.3 code 규칙
+
+```text
+^[A-Z0-9]{6}$
+```
+
+---
+
+# 11. 전체 데이터 흐름
+
+## 11.1 오버레이 제작 흐름
+
+```text
+Windows Client
+ → 사용자가 오버레이 제작
+ → overlay.json 생성
+ → thumbnail.png 생성
+ → 로컬 저장
+```
+
+---
+
+## 11.2 오버레이 업로드 흐름
+
+```text
+Web 또는 Windows Client
+ → 로그인 확인
+ → overlay.json 업로드
+ → Backend JSON 검증
+ → 메타데이터 추출
+ → DB 저장
+ → JSON / Thumbnail 저장
+```
+
+---
+
+## 11.3 웹 탐색 흐름
+
+```text
+Web Frontend
+ → 플랫폼 / 게임 / 코드 검색
+ → Backend API 요청
+ → DB 메타데이터 조회
+ → 카드형 목록 표시
+ → 상세 페이지 표시
+```
+
+---
+
+## 11.4 라이브러리 저장 흐름
+
+```text
+User
+ → 웹에서 오버레이 선택
+ → 라이브러리 저장 요청
+ → Backend 사용자 확인
+ → user_libraries 저장
+ → Web / Windows / Android에서 재사용
+```
+
+---
+
+## 11.5 클라이언트 적용 흐름
+
+```text
+Windows / Android Client
+ → 내 라이브러리 조회
+ → 오버레이 선택
+ → overlay.json 다운로드
+ → JSON 파싱
+ → 플랫폼 방식에 맞춰 렌더링
+```
+
+---
+
+# 12. 인증 정책
+
+## 12.1 인증 방식
+
+```text
+Google OAuth + JWT
+```
+
+---
+
+## 12.2 비로그인 사용자 가능 기능
+
+```text
+오버레이 목록 조회
+오버레이 상세 조회
+플랫폼 목록 조회
+게임 목록 조회
+```
+
+---
+
+## 12.3 로그인 사용자 가능 기능
+
+```text
+내 정보 조회
+오버레이 업로드
+라이브러리 저장
+내 라이브러리 조회
+```
+
+---
+
+# 13. MVP 범위
+
+## 13.1 MVP 포함
+
+```text
+오버레이 목록 조회
+6자리 코드 검색
+플랫폼 / 게임 필터
+Google 로그인
+JWT 인증
+오버레이 업로드
+overlay.json 검증
+썸네일 저장
+내 라이브러리 저장
+내 라이브러리 조회
+Windows Client 로컬 JSON 저장 / 불러오기
+Windows Client JSON 기반 렌더링
+Android Client 전체 화면 오버레이 테스트
+```
+
+---
+
+## 13.2 MVP 제외
+
+```text
+좋아요
+댓글
+신고
+관리자 검수
+추천 알고리즘
+다운로드 통계
+오버레이 버전 관리
+복잡한 에셋 관리
+image element
+text element
+iOS 지원
+AI 기반 추천
+사용자 피드백 분석 자동화
+```
+
+---
+
+# 14. 구현 우선순위
+
+현재 구현 우선순위는 다음과 같다.
+
+```text
+1. Backend Server
+2. Web Frontend
+3. Windows Client 연동
+4. Android Client 연동
+```
+
+초기에는 Backend와 Web을 먼저 구성하여 아래 흐름을 완성한다.
+
+```text
+오버레이 목록 조회
+ → 코드 검색
+ → 플랫폼 / 게임 필터
+ → 로그인
+ → 업로드
+ → 라이브러리 저장
+ → 라이브러리 조회
+```
+
+그 후 Windows / Android 클라이언트가 동일 API와 Overlay JSON 구조를 재사용한다.
+
+---
+
+# 15. 세부 명세서 목록
+
+| 문서명                                  | 역할                      |
+| ------------------------------------ | ----------------------- |
+| `msp_overlay_system_spec.md`         | 전체 시스템 큰 틀과 문서 방향 안내    |
+| `msp_overlay_backend_spec.md`        | 백엔드 구현 명세               |
+| `msp_overlay_frontend_spec.md`       | 웹 프론트엔드 구현 명세           |
+| `msp_overlay_api_contract.md`        | 프론트/클라이언트/서버 간 API 계약   |
+| `msp_overlay_db_spec.md`             | DB 테이블 및 관계 명세          |
+| `msp_overlay_json_schema_spec.md`    | 오버레이 JSON 구조 및 검증 명세    |
+| `msp_overlay_windows_client_spec.md` | Windows 클라이언트 구현 명세     |
+| `msp_overlay_android_client_spec.md` | Android 클라이언트 구현 명세     |
+| `msp_overlay_storage_spec.md`        | 파일 저장소 및 업로드 구조 명세      |
+| `msp_overlay_ui_reference.md`        | 웹 UI/UX 레퍼런스 및 화면 구성 명세 |
+
+---
+
+# 16. 개발 시 문서 참조 방향
+
+## 16.1 서버 구현 시
+
+```text
+1. msp_overlay_backend_spec.md
+2. msp_overlay_api_contract.md
+3. msp_overlay_db_spec.md
+4. msp_overlay_json_schema_spec.md
+5. msp_overlay_storage_spec.md
+```
+
+확인할 내용:
+
+```text
+의존성
+패키지 구조
+인증 방식
+API 목록
+DTO 구조
+DB 테이블
+JSON 검증 규칙
+업로드 처리 방식
+```
+
+---
+
+## 16.2 프론트엔드 구현 시
+
+```text
+1. msp_overlay_frontend_spec.md
+2. msp_overlay_ui_reference.md
+3. msp_overlay_api_contract.md
+4. msp_overlay_json_schema_spec.md
+```
+
+확인할 내용:
+
+```text
+페이지 구조
+라우팅
+API 호출 방식
+목록 / 상세 / 업로드 / 라이브러리 UI
+로그인 상태 처리
+오버레이 JSON 업로드 방식
+에러 / 로딩 / 빈 상태 처리
+```
+
+---
+
+## 16.3 Windows 클라이언트 구현 시
+
+```text
+1. msp_overlay_windows_client_spec.md
+2. msp_overlay_json_schema_spec.md
+3. msp_overlay_api_contract.md
+```
+
+확인할 내용:
+
+```text
+창 추적 방식
+오버레이 편집 구조
+JSON 저장 / 불러오기
+JSON 렌더링 방식
+서버 업로드
+라이브러리 다운로드
+썸네일 생성
+핫키 처리
+Remote Control UI
+```
+
+---
+
+## 16.4 Android 클라이언트 구현 시
+
+```text
+1. msp_overlay_android_client_spec.md
+2. msp_overlay_json_schema_spec.md
+3. msp_overlay_api_contract.md
+```
+
+확인할 내용:
+
+```text
+전체 화면 오버레이 방식
+Notification 제어
+JSON 렌더링
+서버 라이브러리 연동
+권한 처리
+```
+
+---
+
+## 16.5 DB 설계 시
+
+```text
+1. msp_overlay_db_spec.md
+2. msp_overlay_backend_spec.md
+3. msp_overlay_json_schema_spec.md
+```
+
+확인할 내용:
+
+```text
+users
+platforms
+games
+overlays
+user_libraries
+JSON 주요 필드 중복 저장 여부
+created_at / updated_at 기준
+```
+
+---
+
+# 17. 핵심 설계 원칙
+
+```text
+1. 전체 시스템은 Overlay JSON을 중심으로 연결한다.
+2. Backend는 JSON 원본을 검증하고 메타데이터를 관리한다.
+3. Web은 오버레이를 탐색하고 라이브러리에 저장하는 허브 역할을 한다.
+4. Windows Client는 오버레이 제작과 게임 창 기준 렌더링을 담당한다.
+5. Android Client는 전체 화면 기준 렌더링을 담당한다.
+6. DB는 검색, 권한, 라이브러리 관리를 위한 구조화 데이터를 저장한다.
+7. JSON은 렌더링 가능한 원본 데이터로 취급한다.
+8. 실행 정책은 JSON에 과하게 넣지 않고 클라이언트 정책으로 관리한다.
+9. MVP는 단순하게 구성하되, 확장을 막지 않는 구조로 설계한다.
+```
+
+---
+
+# 18. 최종 정리
+
+현재 기준에서 msp overlay는 단순 오버레이 실행기가 아니라, 다음 구조를 가진다.
+
+```text
+오버레이 제작
+ → JSON 저장
+ → 서버 업로드
+ → 웹 탐색
+ → 라이브러리 저장
+ → Windows / Android 적용
+```
+
+따라서 시스템의 중심은 **Overlay JSON + Backend API**다.
+
+개발 우선순위는 Backend부터 잡는 것이 맞고, 이후 Web Frontend를 붙여서 업로드·조회·라이브러리 흐름을 먼저 완성하는 방향이 적합하다.
+Windows Client와 Android Client는 이 구조가 안정화된 뒤 동일 JSON과 API를 재사용하는 방식으로 확장하면 된다.

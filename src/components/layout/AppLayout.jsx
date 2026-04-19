@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 
 import { Footer } from "./Footer";
 import { Header } from "./Header";
+import { ToastViewport } from "../common/ToastViewport";
 
 export function AppLayout() {
   return (
@@ -11,6 +12,7 @@ export function AppLayout() {
         <Outlet />
       </main>
       <Footer />
+      <ToastViewport />
     </div>
   );
 }
