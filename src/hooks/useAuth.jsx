@@ -9,9 +9,24 @@ import {
   useAuthStore,
 } from "../store/authStore";
 
+const DEV_BYPASS_USER = {
+  id: "dev-user",
+  name: "Local Dev User",
+  email: "dev@msp.local",
+};
+
+function isDevAuthBypassEnabled() {
+  return import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEV_AUTH_BYPASS === "true";
+}
+
 export function AuthProvider({ children }) {
   useEffect(() => {
     initializeAuthStore();
+
+    if (isDevAuthBypassEnabled()) {
+      setAuthUser(DEV_BYPASS_USER);
+      return;
+    }
 
     let active = true;
 
@@ -50,11 +65,12 @@ export function useAuth() {
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
+  const isDevBypass = isDevAuthBypassEnabled();
 
   return {
     user,
-    isAuthenticated,
-    isReady: !isLoading,
+    isAuthenticated: isDevBypass ? true : isAuthenticated,
+    isReady: isDevBypass ? true : !isLoading,
     beginLogin() {
       window.location.href =
         import.meta.env.VITE_GOOGLE_LOGIN_URL ?? "http://localhost:8080/api/auth/google";

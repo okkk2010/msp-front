@@ -1,5 +1,7 @@
 # Worklogs
 
+- [2026-04-19_add-dev-auth-bypass-for-editor-testing](./2026-04-19_add-dev-auth-bypass-for-editor-testing.md)
+- [2026-04-19_step8-editor-page-structure](./2026-04-19_step8-editor-page-structure.md)
 - [2026-04-19_step7-library-page](./2026-04-19_step7-library-page.md)
 - [2026-04-19_fix-overlay-route-param-name](./2026-04-19_fix-overlay-route-param-name.md)
 - [2026-04-19_step6-overlay-detail-page](./2026-04-19_step6-overlay-detail-page.md)
