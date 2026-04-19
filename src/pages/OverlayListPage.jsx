@@ -215,7 +215,7 @@ export function OverlayListPage() {
         error={error}
         isLoading={isLoading}
         items={items}
-        onCardClick={(item) => navigate(`/overlays/${item.id}`)}
+        onCardClick={(item) => navigate(`/overlays/${item.overlayId}`)}
         onRetry={() => {
           setReloadNonce((value) => value + 1);
         }}
@@ -229,11 +229,47 @@ function normalizeOverlayItems(data) {
   const content = Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
 
   return content.map((item) => ({
-    ...item,
+    id: item.id,
+    overlayId: item.overlayId,
+    code: item.code,
+    name: item.name,
     description: item.description ?? "",
+    platform: normalizePlatform(item.platform),
+    game: item.game ? { displayName: item.game } : null,
+    thumbnailUrl: buildAssetUrl(item.thumbnailPath),
+    author: {
+      id: item.id,
+      name: item.authorName ?? "Unknown",
+    },
     elementTypes: item.elementTypes ?? [],
     isSaved: Boolean(item.isSaved),
     savedCount: item.savedCount ?? 0,
     updatedAt: formatRelativeDate(item.updatedAt),
   }));
+}
+
+function normalizePlatform(platform) {
+  if (!platform) {
+    return null;
+  }
+
+  const normalized = String(platform).toLowerCase();
+
+  return {
+    name: normalized === "windows" ? "Windows" : normalized === "android" ? "Android" : platform,
+    slug: normalized,
+  };
+}
+
+function buildAssetUrl(path) {
+  if (!path) {
+    return null;
+  }
+
+  if (/^https?:\/\//.test(path)) {
+    return path;
+  }
+
+  const baseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
+  return new URL(path, baseUrl).toString();
 }

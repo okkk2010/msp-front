@@ -1,9 +1,9 @@
 export const ROUTES = {
   home: "/",
   overlays: "/overlays",
-  overlayDetail: "/overlays/:id",
+  overlayDetail: "/overlays/:overlayId",
   editor: "/editor",
-  editorClone: "/editor/:id",
+  editorClone: "/editor/:overlayId",
   library: "/library",
   loginCallback: "/login/callback",
   notFound: "/not-found",

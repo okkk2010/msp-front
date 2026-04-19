@@ -2,10 +2,10 @@ import { Button } from "../common/Button";
 import { useAuth } from "../../hooks/useAuth";
 
 export function LoginButton() {
-  const { signInWithMockUser } = useAuth();
+  const { beginLogin } = useAuth();
 
   return (
-    <Button onClick={signInWithMockUser} variant="ghost">
+    <Button onClick={beginLogin} variant="ghost">
       Login
     </Button>
   );

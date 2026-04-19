@@ -1,7 +1,5 @@
 import { createStore } from "./createStore";
 
-const AUTH_STORAGE_KEY = "msp-front.mock-auth";
-
 const authStore = createStore({
   user: null,
   isAuthenticated: false,
@@ -9,39 +7,13 @@ const authStore = createStore({
 });
 
 export function initializeAuthStore() {
-  const storedValue = window.localStorage.getItem(AUTH_STORAGE_KEY);
-
-  if (!storedValue) {
-    authStore.setState({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
-    });
-    return;
-  }
-
-  try {
-    const user = JSON.parse(storedValue);
-    authStore.setState({
-      user,
-      isAuthenticated: Boolean(user),
-      isLoading: false,
-    });
-  } catch {
-    window.localStorage.removeItem(AUTH_STORAGE_KEY);
-    authStore.setState({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
-    });
-  }
+  authStore.setState((state) => ({
+    ...state,
+    isLoading: true,
+  }));
 }
 
 export function setAuthUser(user) {
-  if (user) {
-    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
-  }
-
   authStore.setState({
     user,
     isAuthenticated: Boolean(user),
@@ -50,12 +22,18 @@ export function setAuthUser(user) {
 }
 
 export function clearAuthUser() {
-  window.localStorage.removeItem(AUTH_STORAGE_KEY);
   authStore.setState({
     user: null,
     isAuthenticated: false,
     isLoading: false,
   });
+}
+
+export function setAuthLoading(isLoading) {
+  authStore.setState((state) => ({
+    ...state,
+    isLoading,
+  }));
 }
 
 export function useAuthStore(selector) {
