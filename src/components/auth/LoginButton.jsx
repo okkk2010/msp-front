@@ -1,15 +1,11 @@
 import { Button } from "../common/Button";
+import { useAuth } from "../../hooks/useAuth";
 
 export function LoginButton() {
+  const { signInWithMockUser } = useAuth();
+
   return (
-    <Button
-      onClick={() => {
-        window.location.href =
-          import.meta.env.VITE_GOOGLE_LOGIN_URL ??
-          "http://localhost:8080/oauth2/authorization/google";
-      }}
-      variant="ghost"
-    >
+    <Button onClick={signInWithMockUser} variant="ghost">
       Login
     </Button>
   );

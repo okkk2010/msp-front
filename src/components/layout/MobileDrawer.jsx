@@ -1,8 +1,16 @@
 import { NavLink } from "react-router-dom";
 
+import { LoginButton } from "../auth/LoginButton";
 import { Button } from "../common/Button";
 
-export function MobileDrawer({ items, onClose, open }) {
+export function MobileDrawer({
+  isAuthenticated,
+  items,
+  onClose,
+  onSignOut,
+  open,
+  userName,
+}) {
   if (!open) {
     return null;
   }
@@ -51,6 +59,18 @@ export function MobileDrawer({ items, onClose, open }) {
             ),
           )}
         </nav>
+        <div className="mt-auto border-t border-[var(--color-border)] pt-4">
+          {isAuthenticated ? (
+            <div className="space-y-3">
+              <p className="text-sm text-[var(--color-text-sub)]">{userName ?? "User"}</p>
+              <Button className="w-full" onClick={onSignOut} variant="secondary">
+                Logout
+              </Button>
+            </div>
+          ) : (
+            <LoginButton />
+          )}
+        </div>
       </aside>
     </div>
   );

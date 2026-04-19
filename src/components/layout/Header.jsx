@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 import { LoginButton } from "../auth/LoginButton";
+import { UserProfileButton } from "../auth/UserProfileButton";
 import { Button } from "../common/Button";
 import { Input } from "../common/Input";
 import { ROUTES } from "../../constants/routes";
+import { useAuth } from "../../hooks/useAuth";
 import { MobileDrawer } from "./MobileDrawer";
 
 const NAV_ITEMS = [
@@ -17,6 +19,8 @@ const NAV_ITEMS = [
 
 export function Header() {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const navigate = useNavigate();
+  const { isAuthenticated, signOut, user } = useAuth();
 
   return (
     <>
@@ -30,17 +34,37 @@ export function Header() {
           </div>
           <div className="hidden items-center gap-3 md:flex">
             <Input className="w-44" placeholder="Search overlays" />
-            <Button as="a" href={ROUTES.editor}>
+            <Button
+              onClick={() => {
+                navigate(ROUTES.editor);
+              }}
+            >
               Create Overlay
             </Button>
-            <LoginButton />
+            {isAuthenticated ? (
+              <>
+                <UserProfileButton userName={user?.name ?? "User"} />
+                <Button onClick={signOut} variant="ghost">
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <LoginButton />
+            )}
           </div>
           <Button className="md:hidden" onClick={() => setDrawerOpen(true)} variant="ghost">
             Menu
           </Button>
         </div>
       </header>
-      <MobileDrawer items={NAV_ITEMS} onClose={() => setDrawerOpen(false)} open={drawerOpen} />
+      <MobileDrawer
+        isAuthenticated={isAuthenticated}
+        items={NAV_ITEMS}
+        onClose={() => setDrawerOpen(false)}
+        onSignOut={signOut}
+        open={drawerOpen}
+        userName={user?.name}
+      />
     </>
   );
 }
