@@ -1,0 +1,47 @@
+export const DEFAULT_RECT_ELEMENT = {
+  type: "rect",
+  opacity: 100,
+  zIndex: 1,
+  visible: true,
+  locked: false,
+  x: 120,
+  y: 120,
+  width: 220,
+  height: 120,
+  rotation: 0,
+  fillColor: "#38BDF8",
+  strokeColor: "#38BDF8",
+  strokeWidth: 2,
+  cornerRadius: 12,
+};
+
+export const DEFAULT_CIRCLE_ELEMENT = {
+  type: "circle",
+  opacity: 100,
+  zIndex: 1,
+  visible: true,
+  locked: false,
+  x: 200,
+  y: 200,
+  width: 140,
+  height: 140,
+  rotation: 0,
+  fillColor: "rgba(56, 189, 248, 0.15)",
+  strokeColor: "#38BDF8",
+  strokeWidth: 3,
+};
+
+export const DEFAULT_LINE_ELEMENT = {
+  type: "line",
+  opacity: 100,
+  zIndex: 1,
+  visible: true,
+  locked: false,
+  x1: 100,
+  y1: 100,
+  x2: 320,
+  y2: 100,
+  strokeColor: "#38BDF8",
+  strokeWidth: 4,
+  dashStyle: "solid",
+};
