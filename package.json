@@ -1,8 +1,23 @@
 {
   "name": "msp-front",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
+  "description": "",
+  "homepage": "https://github.com/okkk2010/msp-front#readme",
+  "bugs": {
+    "url": "https://github.com/okkk2010/msp-front/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/okkk2010/msp-front.git"
+  },
+  "license": "ISC",
+  "author": "",
   "type": "module",
+  "main": "eslint.config.js",
+  "directories": {
+    "doc": "docs"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -27,20 +42,5 @@
     "globals": "^16.3.0",
     "tailwindcss": "^4.1.12",
     "vite": "^7.1.3"
-  },
-  "main": "eslint.config.js",
-  "directories": {
-    "doc": "docs"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/okkk2010/msp-front.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/okkk2010/msp-front/issues"
-  },
-  "homepage": "https://github.com/okkk2010/msp-front#readme",
-  "description": ""
+  }
 }
