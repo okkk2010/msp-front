@@ -1,16 +1,56 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { fetchCurrentUser } from "../api/authApi";
-import { useAuth } from "../hooks/useAuth";
+import { LoginButton } from "../components/auth/LoginButton";
+import { Button } from "../components/common/Button";
+import { ErrorMessage } from "../components/common/ErrorMessage";
+import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { clearAuthUser, setAuthUser } from "../store/authStore";
+import { consumeAuthRedirectPath } from "../utils/authRedirect";
+import { getApiErrorMessage } from "../utils/apiError";
+import { clearAuthTokens, saveAuthTokens } from "../utils/authTokens";
 
 export function LoginCallbackPage() {
   const navigate = useNavigate();
-  const { beginLogin } = useAuth();
+  const [error, setError] = useState("");
 
   useEffect(() => {
     let active = true;
+    const searchParams = new URLSearchParams(window.location.search);
+    const isSuccess = searchParams.get("success") === "true";
+    const accessToken = searchParams.get("accessToken") || "";
+    const refreshToken = searchParams.get("refreshToken") || "";
+    const tokenType = searchParams.get("tokenType") || "Bearer";
+    const refreshTokenExpiresAt = searchParams.get("refreshTokenExpiresAt") || "";
+    const errorMessage =
+      searchParams.get("message") || searchParams.get("error") || "로그인 처리에 실패했습니다.";
+
+    if (!isSuccess) {
+      clearAuthTokens();
+      clearAuthUser(errorMessage);
+      setError(errorMessage);
+      return () => {
+        active = false;
+      };
+    }
+
+    if (!accessToken || !refreshToken) {
+      const message = "로그인 토큰이 콜백에 포함되지 않았습니다.";
+      clearAuthTokens();
+      clearAuthUser(message);
+      setError(message);
+      return () => {
+        active = false;
+      };
+    }
+
+    saveAuthTokens({
+      accessToken,
+      refreshToken,
+      tokenType,
+      refreshTokenExpiresAt,
+    });
 
     fetchCurrentUser()
       .then((user) => {
@@ -19,14 +59,17 @@ export function LoginCallbackPage() {
         }
 
         setAuthUser(user);
-        navigate("/", { replace: true });
+        navigate(consumeAuthRedirectPath(), { replace: true });
       })
-      .catch(() => {
+      .catch((requestError) => {
         if (!active) {
           return;
         }
 
-        clearAuthUser();
+        const message = getApiErrorMessage(requestError);
+        clearAuthTokens();
+        clearAuthUser(message);
+        setError(message);
       });
 
     return () => {
@@ -37,18 +80,23 @@ export function LoginCallbackPage() {
   return (
     <section className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8">
       <h1 className="text-3xl font-semibold">Login Callback</h1>
-      <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--color-text-sub)]">
-        로그인 결과를 처리하고 있습니다.
-      </p>
-      <div className="mt-6">
-        <button
-          className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-main)]"
-          onClick={beginLogin}
-          type="button"
-        >
-          로그인 다시 시도
-        </button>
-      </div>
+      {!error ? (
+        <div className="mt-4">
+          <LoadingSpinner label="로그인 결과를 처리하고 있습니다." />
+        </div>
+      ) : (
+        <>
+          <div className="mt-4">
+            <ErrorMessage>{error}</ErrorMessage>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <LoginButton variant="secondary">로그인 다시 시도</LoginButton>
+            <Button onClick={() => navigate("/")} variant="ghost">
+              홈으로 이동
+            </Button>
+          </div>
+        </>
+      )}
     </section>
   );
 }

@@ -1,4 +1,5 @@
 import { EditorActionBar } from "./EditorActionBar";
+import { EditorJsonPreviewModal } from "./EditorJsonPreviewModal";
 import { EditorToolbar } from "./EditorToolbar";
 import { ElementPropertyPanel } from "./ElementPropertyPanel";
 import { LayerPanel } from "./LayerPanel";
@@ -9,21 +10,28 @@ export function OverlayEditor({
   canvas,
   currentMode,
   elements,
+  isUploading,
+  jsonPreview,
   onAddCircle,
   onAddLine,
   onAddRect,
   onCanvasChange,
+  onCanvasSelect,
+  onClosePreview,
   onDelete,
+  onDragElement,
   onElementFieldChange,
-  onImport,
+  onExportJson,
+  onImportJson,
   onMetaChange,
   onMoveBack,
   onMoveFront,
   onOpacityChange,
-  onPreview,
+  onOpenPreview,
   onReset,
   onSelectElement,
   onSelectMode,
+  onUpload,
   opacity,
   overlayMeta,
   selectedElement,
@@ -32,9 +40,9 @@ export function OverlayEditor({
   return (
     <section className="space-y-4">
       <div className="rounded-3xl border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/10 px-4 py-3 text-sm text-[var(--color-warning)] md:hidden">
-        모바일에서는 오버레이 제작 기능이 제한될 수 있습니다. PC 환경에서 제작하는 것을 권장합니다.
+        모바일에서는 오버레이 제작 기능이 제한적입니다. PC 환경에서 작업하는 것을 권장합니다.
       </div>
-      <div className="grid gap-4 xl:grid-cols-[220px_minmax(0,1fr)_360px]">
+      <div className="grid items-start gap-4 xl:grid-cols-[220px_minmax(0,1fr)_360px]">
         <EditorToolbar
           currentMode={currentMode}
           onAddCircle={onAddCircle}
@@ -45,7 +53,13 @@ export function OverlayEditor({
           onMoveFront={onMoveFront}
           onSelectMode={onSelectMode}
         />
-        <OverlayCanvas canvas={canvas} elements={elements} selectedElementId={selectedElementId} />
+        <OverlayCanvas
+          canvas={canvas}
+          elements={elements}
+          onDragElement={onDragElement}
+          onSelectElement={onCanvasSelect}
+          selectedElementId={selectedElementId}
+        />
         <div className="space-y-4">
           <OverlayMetaPanel
             canvas={canvas}
@@ -65,7 +79,23 @@ export function OverlayEditor({
           />
         </div>
       </div>
-      <EditorActionBar hasElements={elements.length > 0} onImport={onImport} onPreview={onPreview} onReset={onReset} />
+      <EditorActionBar
+        hasElements={elements.length > 0}
+        isUploading={isUploading}
+        onExport={onExportJson}
+        onImport={onImportJson}
+        onPreview={onOpenPreview}
+        onReset={onReset}
+        onUpload={onUpload}
+      />
+      <EditorJsonPreviewModal
+        errors={jsonPreview.errors}
+        jsonText={jsonPreview.jsonText}
+        onClose={onClosePreview}
+        onExport={onExportJson}
+        open={jsonPreview.open}
+        summary={jsonPreview.summary}
+      />
     </section>
   );
 }

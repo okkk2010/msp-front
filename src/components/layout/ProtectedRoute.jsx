@@ -1,13 +1,15 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
+import { useAuth } from "../../hooks/useAuth";
 import { LoginButton } from "../auth/LoginButton";
 import { Button } from "../common/Button";
 import { Card } from "../common/Card";
-import { useAuth } from "../../hooks/useAuth";
 
 export function ProtectedRoute({ children }) {
+  const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, isReady } = useAuth();
+  const { error, isAuthenticated, isReady } = useAuth();
+  const redirectTo = `${location.pathname}${location.search}${location.hash}`;
 
   if (!isReady) {
     return (
@@ -22,12 +24,14 @@ export function ProtectedRoute({ children }) {
       <Card className="mx-auto max-w-2xl p-8 text-center">
         <h1 className="text-2xl font-semibold">로그인이 필요한 기능입니다.</h1>
         <p className="mt-3 text-sm leading-6 text-[var(--color-text-sub)]">
-          Editor와 Library는 로그인 후 사용할 수 있습니다. OAuth 연동 전까지는 임시 로그인
-          버튼으로 보호 라우트 흐름을 확인할 수 있습니다.
+          Editor와 Library는 로그인 후 사용할 수 있습니다. 로그인 후에는 현재 페이지로 다시 돌아옵니다.
         </p>
+        {error ? <p className="mt-3 text-sm text-[var(--color-danger)]">{error}</p> : null}
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <LoginButton />
-          <Button onClick={() => navigate(-1)} variant="secondary">
+          <LoginButton redirectTo={redirectTo} variant="secondary">
+            Continue with Google
+          </LoginButton>
+          <Button onClick={() => navigate(-1)} variant="ghost">
             이전 페이지로
           </Button>
         </div>

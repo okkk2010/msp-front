@@ -1,5 +1,16 @@
 # Worklogs
 
+- [2026-04-20_editor-unsaved-exit-guard.md](./2026-04-20_editor-unsaved-exit-guard.md)
+- [2026-04-20_fix-thumbnail-png-upload.md](./2026-04-20_fix-thumbnail-png-upload.md)
+- [2026-04-20_fix-upload-overlay-json-description.md](./2026-04-20_fix-upload-overlay-json-description.md)
+- [2026-04-20_fix-login-callback-token-bridge.md](./2026-04-20_fix-login-callback-token-bridge.md)
+- [2026-04-19_step15-api-contract-and-error-handling.md](./2026-04-19_step15-api-contract-and-error-handling.md)
+- [2026-04-19_step14-auth-routes-and-access.md](./2026-04-19_step14-auth-routes-and-access.md)
+- [2026-04-19_step13-json-import-export-ux.md](./2026-04-19_step13-json-import-export-ux.md)
+- [2026-04-19_step12-upload-multipart-flow.md](./2026-04-19_step12-upload-multipart-flow.md)
+- [2026-04-19_step11-editor-state-json-flow.md](./2026-04-19_step11-editor-state-json-flow.md)
+- [2026-04-19_fix-editor-canvas-layout-shift.md](./2026-04-19_fix-editor-canvas-layout-shift.md)
+- [2026-04-19_step9-editor-svg-canvas.md](./2026-04-19_step9-editor-svg-canvas.md)
 - [2026-04-19_add-dev-auth-bypass-for-editor-testing](./2026-04-19_add-dev-auth-bypass-for-editor-testing.md)
 - [2026-04-19_step8-editor-page-structure](./2026-04-19_step8-editor-page-structure.md)
 - [2026-04-19_step7-library-page](./2026-04-19_step7-library-page.md)

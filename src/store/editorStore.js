@@ -76,6 +76,35 @@ export function updateElement(id, patch) {
   );
 }
 
+export function moveElement(id, delta) {
+  editorStore.setState((state) =>
+    withDirtyState({
+      ...state,
+      elements: state.elements.map((element) => {
+        if (element.id !== id) {
+          return element;
+        }
+
+        if (element.type === "line") {
+          return {
+            ...element,
+            x1: element.x1 + delta.dx,
+            x2: element.x2 + delta.dx,
+            y1: element.y1 + delta.dy,
+            y2: element.y2 + delta.dy,
+          };
+        }
+
+        return {
+          ...element,
+          x: element.x + delta.dx,
+          y: element.y + delta.dy,
+        };
+      }),
+    }),
+  );
+}
+
 export function removeElement(id) {
   editorStore.setState((state) =>
     withDirtyState({
@@ -125,13 +154,23 @@ export function loadFromOverlayJson(json) {
     overlayMeta: {
       ...state.overlayMeta,
       name: json.name,
+      description: json.description ?? "",
+      code: extractCodeFromOverlayId(json.overlayId),
       platform: json.platform,
-      gameId: json.game?.id ? Number(json.game.id) : null,
+      gameId: json.game?.id ?? null,
       gameName: json.game?.name ?? "",
     },
     canvas: json.canvas,
-    overlaySettings: json.overlaySettings,
-    elements: json.elements,
+    overlaySettings: {
+      ...json.overlaySettings,
+      opacity: denormalizeOpacity(json.overlaySettings?.opacity),
+    },
+    elements: Array.isArray(json.elements)
+      ? json.elements.map((element) => ({
+          ...element,
+          opacity: denormalizeOpacity(element.opacity),
+        }))
+      : [],
     selectedElementId: null,
     isDirty: false,
   }));
@@ -139,6 +178,24 @@ export function loadFromOverlayJson(json) {
 
 export function resetEditor() {
   editorStore.setState(DEFAULT_EDITOR_STATE);
+}
+
+function denormalizeOpacity(value) {
+  if (typeof value !== "number") {
+    return 100;
+  }
+
+  return value <= 1 ? Math.round(value * 100) : value;
+}
+
+function extractCodeFromOverlayId(overlayId) {
+  const value = String(overlayId ?? "");
+
+  if (value.startsWith("ovl_")) {
+    return value.slice(4).toUpperCase();
+  }
+
+  return value.toUpperCase();
 }
 
 export { editorStore };

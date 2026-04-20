@@ -12,10 +12,10 @@ const FIELD_MAP = {
 export function ElementPropertyPanel({ element, onChange }) {
   if (!element) {
     return (
-      <Card className="p-5">
+      <Card className="min-h-[360px] p-5">
         <h2 className="text-base font-semibold">Property Panel</h2>
         <p className="mt-2 text-sm leading-6 text-[var(--color-text-sub)]">
-          요소를 선택하면 속성을 수정할 수 있습니다.
+          요소를 선택하면 속성을 편집할 수 있습니다.
         </p>
       </Card>
     );
@@ -24,11 +24,11 @@ export function ElementPropertyPanel({ element, onChange }) {
   const fields = FIELD_MAP[element.type] ?? [];
 
   return (
-    <Card className="space-y-4 p-5">
+    <Card className="min-h-[360px] space-y-4 p-5">
       <div>
         <h2 className="text-base font-semibold">Property Panel</h2>
         <p className="mt-1 text-sm text-[var(--color-text-sub)]">
-          {element.type} · {element.id}
+          {element.type} | {element.id}
         </p>
       </div>
       <div className="grid gap-3 md:grid-cols-2">

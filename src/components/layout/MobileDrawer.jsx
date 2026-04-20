@@ -5,6 +5,7 @@ import { Button } from "../common/Button";
 
 export function MobileDrawer({
   isAuthenticated,
+  isReady,
   items,
   onClose,
   onSignOut,
@@ -60,7 +61,9 @@ export function MobileDrawer({
           )}
         </nav>
         <div className="mt-auto border-t border-[var(--color-border)] pt-4">
-          {isAuthenticated ? (
+          {!isReady ? (
+            <p className="text-sm text-[var(--color-text-sub)]">Checking session...</p>
+          ) : isAuthenticated ? (
             <div className="space-y-3">
               <p className="text-sm text-[var(--color-text-sub)]">{userName ?? "User"}</p>
               <Button className="w-full" onClick={onSignOut} variant="secondary">
@@ -68,7 +71,7 @@ export function MobileDrawer({
               </Button>
             </div>
           ) : (
-            <LoginButton />
+            <LoginButton variant="secondary">Continue with Google</LoginButton>
           )}
         </div>
       </aside>

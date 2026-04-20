@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
+import { ROUTES } from "../../constants/routes";
+import { useAuth } from "../../hooks/useAuth";
 import { LoginButton } from "../auth/LoginButton";
 import { UserProfileButton } from "../auth/UserProfileButton";
 import { Button } from "../common/Button";
 import { Input } from "../common/Input";
-import { ROUTES } from "../../constants/routes";
-import { useAuth } from "../../hooks/useAuth";
 import { MobileDrawer } from "./MobileDrawer";
 
 const NAV_ITEMS = [
@@ -20,7 +20,7 @@ const NAV_ITEMS = [
 export function Header() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const navigate = useNavigate();
-  const { isAuthenticated, signOut, user } = useAuth();
+  const { error, isAuthenticated, isReady, signOut, user } = useAuth();
 
   return (
     <>
@@ -34,14 +34,10 @@ export function Header() {
           </div>
           <div className="hidden items-center gap-3 md:flex">
             <Input className="w-44" placeholder="Search overlays" />
-            <Button
-              onClick={() => {
-                navigate(ROUTES.editor);
-              }}
-            >
-              Create Overlay
-            </Button>
-            {isAuthenticated ? (
+            <Button onClick={() => navigate(ROUTES.editor)}>Create Overlay</Button>
+            {!isReady ? (
+              <span className="text-sm text-[var(--color-text-sub)]">Checking session...</span>
+            ) : isAuthenticated ? (
               <>
                 <UserProfileButton userName={user?.name ?? "User"} />
                 <Button onClick={signOut} variant="ghost">
@@ -49,16 +45,22 @@ export function Header() {
                 </Button>
               </>
             ) : (
-              <LoginButton />
+              <LoginButton variant="ghost">Login</LoginButton>
             )}
           </div>
           <Button className="md:hidden" onClick={() => setDrawerOpen(true)} variant="ghost">
             Menu
           </Button>
         </div>
+        {error && !isAuthenticated ? (
+          <div className="border-t border-[var(--color-border)] bg-[var(--color-danger)]/10 px-6 py-2 text-sm text-[var(--color-danger)] lg:px-10">
+            {error}
+          </div>
+        ) : null}
       </header>
       <MobileDrawer
         isAuthenticated={isAuthenticated}
+        isReady={isReady}
         items={NAV_ITEMS}
         onClose={() => setDrawerOpen(false)}
         onSignOut={signOut}

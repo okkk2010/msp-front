@@ -41,7 +41,11 @@ export function LayerPanel({
                       <p className="text-sm font-medium text-[var(--color-text-main)]">
                         {item.type}
                       </p>
-                      <p className="text-xs text-[var(--color-text-sub)]">{item.id}</p>
+                      <p className="text-xs text-[var(--color-text-sub)]">
+                        {item.id}
+                        {item.locked ? " | locked" : ""}
+                        {item.visible === false ? " | hidden" : ""}
+                      </p>
                     </div>
                     <span className="text-xs text-[var(--color-text-sub)]">z {item.zIndex}</span>
                   </div>

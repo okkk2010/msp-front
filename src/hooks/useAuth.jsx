@@ -4,10 +4,13 @@ import { fetchCurrentUser, logoutCurrentUser } from "../api/authApi";
 import {
   clearAuthUser,
   initializeAuthStore,
-  setAuthUser,
   setAuthLoading,
+  setAuthUser,
   useAuthStore,
 } from "../store/authStore";
+import { getApiErrorMessage } from "../utils/apiError";
+import { saveAuthRedirectPath } from "../utils/authRedirect";
+import { clearAuthTokens, getAccessToken } from "../utils/authTokens";
 
 const DEV_BYPASS_USER = {
   id: "dev-user",
@@ -28,6 +31,12 @@ export function AuthProvider({ children }) {
       return;
     }
 
+    if (!getAccessToken()) {
+      clearAuthUser();
+      setAuthLoading(false);
+      return;
+    }
+
     let active = true;
 
     fetchCurrentUser()
@@ -38,12 +47,13 @@ export function AuthProvider({ children }) {
 
         setAuthUser(user);
       })
-      .catch(() => {
+      .catch((error) => {
         if (!active) {
           return;
         }
 
-        clearAuthUser();
+        const status = error?.response?.status;
+        clearAuthUser(status && status !== 401 ? getApiErrorMessage(error) : "");
       })
       .finally(() => {
         if (!active) {
@@ -65,13 +75,16 @@ export function useAuth() {
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
+  const error = useAuthStore((state) => state.error);
   const isDevBypass = isDevAuthBypassEnabled();
 
   return {
     user,
+    error,
     isAuthenticated: isDevBypass ? true : isAuthenticated,
     isReady: isDevBypass ? true : !isLoading,
-    beginLogin() {
+    beginLogin(redirectTo = window.location.pathname + window.location.search + window.location.hash) {
+      saveAuthRedirectPath(redirectTo);
       window.location.href =
         import.meta.env.VITE_GOOGLE_LOGIN_URL ?? "http://localhost:8080/api/auth/google";
     },
@@ -79,9 +92,10 @@ export function useAuth() {
       try {
         await logoutCurrentUser();
       } catch {
-        // 서버 로그아웃 실패여도 클라이언트 상태는 정리한다.
+        // 클라이언트 상태는 즉시 정리한다.
       }
 
+      clearAuthTokens();
       clearAuthUser();
     },
   };

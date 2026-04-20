@@ -4,11 +4,13 @@ const authStore = createStore({
   user: null,
   isAuthenticated: false,
   isLoading: true,
+  error: "",
 });
 
 export function initializeAuthStore() {
   authStore.setState((state) => ({
     ...state,
+    error: "",
     isLoading: true,
   }));
 }
@@ -16,14 +18,16 @@ export function initializeAuthStore() {
 export function setAuthUser(user) {
   authStore.setState({
     user,
+    error: "",
     isAuthenticated: Boolean(user),
     isLoading: false,
   });
 }
 
-export function clearAuthUser() {
+export function clearAuthUser(error = "") {
   authStore.setState({
     user: null,
+    error,
     isAuthenticated: false,
     isLoading: false,
   });

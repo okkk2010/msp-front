@@ -1,12 +1,12 @@
-import { Button } from "../common/Button";
 import { useAuth } from "../../hooks/useAuth";
+import { Button } from "../common/Button";
 
-export function LoginButton() {
+export function LoginButton({ children = "Login", redirectTo, variant = "ghost" }) {
   const { beginLogin } = useAuth();
 
   return (
-    <Button onClick={beginLogin} variant="ghost">
-      Login
+    <Button onClick={() => beginLogin(redirectTo)} variant={variant}>
+      {children}
     </Button>
   );
 }
