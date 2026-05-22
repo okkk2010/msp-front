@@ -1,5 +1,6 @@
 # Worklogs
 
+- [2026-05-22_add-vercel-api-domain-config.md](./2026-05-22_add-vercel-api-domain-config.md)
 - [2026-04-21_add-local-1st-final-doc.md](./2026-04-21_add-local-1st-final-doc.md)
 - [2026-04-20_editor-unsaved-exit-guard.md](./2026-04-20_editor-unsaved-exit-guard.md)
 - [2026-04-20_fix-thumbnail-png-upload.md](./2026-04-20_fix-thumbnail-png-upload.md)
