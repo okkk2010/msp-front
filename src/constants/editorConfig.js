@@ -16,6 +16,7 @@ export const DEFAULT_EDITOR_STATE = {
   },
   elements: [],
   selectedElementId: null,
+  selectedElementIds: [],
   editorMode: "select",
   zoom: 1,
   isDirty: false,

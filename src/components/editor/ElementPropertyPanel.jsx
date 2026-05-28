@@ -9,7 +9,11 @@ const FIELD_MAP = {
   line: ["x1", "y1", "x2", "y2", "opacity", "zIndex", "strokeWidth"],
 };
 
-export function ElementPropertyPanel({ element, onChange }) {
+export function ElementPropertyPanel({ element, elements = [], onChange }) {
+  if (elements.length > 1) {
+    return <MultiElementPropertyPanel elements={elements} onChange={onChange} />;
+  }
+
   if (!element) {
     return (
       <Card className="min-h-[360px] p-5">
@@ -77,9 +81,95 @@ export function ElementPropertyPanel({ element, onChange }) {
   );
 }
 
+function MultiElementPropertyPanel({ elements, onChange }) {
+  const fillValue = getCommonValue(elements.filter(hasFillColor), "fillColor");
+  const strokeColorValue = getCommonValue(elements.filter(hasStrokeColor), "strokeColor");
+  const strokeWidthValue = getCommonValue(elements.filter(hasStrokeWidth), "strokeWidth");
+  const cornerRadiusValue = getCommonValue(elements.filter(hasCornerRadius), "cornerRadius");
+
+  return (
+    <Card className="min-h-[360px] space-y-4 p-5">
+      <div>
+        <h2 className="text-base font-semibold">Property Panel</h2>
+        <p className="mt-1 text-sm text-[var(--color-text-sub)]">
+          {elements.length} elements selected
+        </p>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        {elements.some(hasFillColor) ? (
+          <label className="space-y-2 text-sm">
+            <span className="text-[var(--color-text-sub)]">fillColor</span>
+            <ColorPicker
+              onChange={(event) => onChange("fillColor", event.target.value)}
+              value={sanitizeColorValue(fillValue)}
+            />
+          </label>
+        ) : null}
+        {elements.some(hasStrokeColor) ? (
+          <label className="space-y-2 text-sm">
+            <span className="text-[var(--color-text-sub)]">strokeColor</span>
+            <ColorPicker
+              onChange={(event) => onChange("strokeColor", event.target.value)}
+              value={sanitizeColorValue(strokeColorValue)}
+            />
+          </label>
+        ) : null}
+        {elements.some(hasStrokeWidth) ? (
+          <label className="space-y-2 text-sm">
+            <span className="text-[var(--color-text-sub)]">strokeWidth</span>
+            <Input
+              onChange={(event) => onChange("strokeWidth", normalizeValue(event.target.value))}
+              placeholder={strokeWidthValue === "" ? "mixed" : undefined}
+              value={strokeWidthValue}
+            />
+          </label>
+        ) : null}
+        {elements.some(hasCornerRadius) ? (
+          <label className="space-y-2 text-sm">
+            <span className="text-[var(--color-text-sub)]">cornerRadius</span>
+            <Input
+              onChange={(event) => onChange("cornerRadius", normalizeValue(event.target.value))}
+              placeholder={cornerRadiusValue === "" ? "mixed" : undefined}
+              value={cornerRadiusValue}
+            />
+          </label>
+        ) : null}
+      </div>
+    </Card>
+  );
+}
+
 function normalizeValue(value) {
   const asNumber = Number(value);
   return Number.isNaN(asNumber) ? value : asNumber;
+}
+
+function getCommonValue(elements, field) {
+  if (!elements.length) {
+    return "";
+  }
+
+  const [firstElement] = elements;
+  const firstValue = firstElement[field];
+  const hasSameValue = elements.every((element) => element[field] === firstValue);
+
+  return hasSameValue ? firstValue : "";
+}
+
+function hasFillColor(element) {
+  return "fillColor" in element;
+}
+
+function hasStrokeColor(element) {
+  return "strokeColor" in element;
+}
+
+function hasStrokeWidth(element) {
+  return "strokeWidth" in element;
+}
+
+function hasCornerRadius(element) {
+  return "cornerRadius" in element;
 }
 
 function sanitizeColorValue(value) {

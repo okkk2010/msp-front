@@ -4,7 +4,7 @@ import {
   DEFAULT_RECT_ELEMENT,
 } from "../constants/elementDefaults";
 
-export function createElement(type) {
+export function createElement(type, overrides = {}) {
   const id =
     typeof crypto !== "undefined" && crypto.randomUUID
       ? crypto.randomUUID()
@@ -16,6 +16,7 @@ export function createElement(type) {
     return {
       ...shared,
       ...DEFAULT_RECT_ELEMENT,
+      ...overrides,
     };
   }
 
@@ -23,11 +24,13 @@ export function createElement(type) {
     return {
       ...shared,
       ...DEFAULT_CIRCLE_ELEMENT,
+      ...overrides,
     };
   }
 
   return {
     ...shared,
     ...DEFAULT_LINE_ELEMENT,
+    ...overrides,
   };
 }

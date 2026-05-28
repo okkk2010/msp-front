@@ -2,6 +2,7 @@ import { Button } from "../common/Button";
 import { Card } from "../common/Card";
 
 export function EditorActionBar({
+  className = "",
   hasElements,
   isUploading,
   onExport,
@@ -11,14 +12,14 @@ export function EditorActionBar({
   onUpload,
 }) {
   return (
-    <Card className="flex flex-wrap items-center justify-between gap-3 p-4">
-      <div>
-        <h2 className="text-base font-semibold">Bottom Action Bar</h2>
-        <p className="text-sm text-[var(--color-text-sub)]">
-          JSON import/export는 백업과 테스트용입니다. 서버 업로드는 Editor 상태를 확인한 뒤 Upload로 진행합니다.
+    <Card className={["flex flex-wrap items-center justify-between gap-3 p-4", className].join(" ")}>
+      <div className="min-w-0">
+        <h2 className="text-base font-semibold">Actions</h2>
+        <p className="text-sm text-[var(--color-text-sub)] xl:hidden">
+          JSON import/export and upload actions.
         </p>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 xl:w-full">
         <Button disabled={isUploading} onClick={onUpload} variant="secondary">
           {isUploading ? "Uploading..." : "Upload"}
         </Button>

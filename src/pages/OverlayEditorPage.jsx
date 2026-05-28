@@ -12,14 +12,16 @@ import {
   loadFromOverlayJson,
   moveElement,
   moveElementLayer,
+  removeElements,
   removeElement,
   resetEditor,
   selectElement,
-  setCanvas,
+  selectElements,
   setEditorMode,
-  setOverlayMeta,
-  setOverlaySettings,
+  toggleElementSelection,
   updateElement,
+  updateElements,
+  moveElementLayerTo,
   useEditorStore,
 } from "../store/editorStore";
 import { createElement } from "../utils/elementFactory";
@@ -44,6 +46,7 @@ export function OverlayEditorPage() {
     jsonText: "",
     summary: null,
   });
+  const [copiedElement, setCopiedElement] = useState(null);
 
   const editorState = useEditorStore((state) => state);
   const canvas = editorState.canvas;
@@ -51,9 +54,10 @@ export function OverlayEditorPage() {
   const elements = editorState.elements;
   const overlayMeta = editorState.overlayMeta;
   const selectedElementId = editorState.selectedElementId;
-  const opacity = editorState.overlaySettings.opacity;
+  const selectedElementIds = editorState.selectedElementIds ?? [];
   const isDirty = editorState.isDirty;
   const selectedElement = elements.find((element) => element.id === selectedElementId) ?? null;
+  const selectedElements = elements.filter((element) => selectedElementIds.includes(element.id));
   const shouldWarnOnExit = isDirty && !isUploading && !shouldBypassExitGuard;
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
@@ -84,9 +88,179 @@ export function OverlayEditorPage() {
     event.returnValue = "";
   });
 
-  function handleAddElement(type) {
-    addElement(createElement(type));
-    setEditorMode(type);
+  function handleDrawRect(bounds) {
+    addElement(
+      createElement("rect", {
+        x: Math.round(bounds.x),
+        y: Math.round(bounds.y),
+        width: Math.round(bounds.width),
+        height: Math.round(bounds.height),
+      }),
+    );
+    setEditorMode("select");
+  }
+
+  function handleDrawCircle(bounds) {
+    addElement(
+      createElement("circle", {
+        x: Math.round(bounds.x),
+        y: Math.round(bounds.y),
+        width: Math.round(bounds.width),
+        height: Math.round(bounds.height),
+      }),
+    );
+    setEditorMode("select");
+  }
+
+  function handleDeleteElement(id = selectedElementId) {
+    if (!id && selectedElementIds.length > 1) {
+      const deletableIds = selectedElements
+        .filter((element) => !element.locked)
+        .map((element) => element.id);
+
+      if (!deletableIds.length) {
+        showToast({
+          message: "Locked elements cannot be deleted.",
+          type: "error",
+        });
+        return;
+      }
+
+      removeElements(deletableIds);
+      return;
+    }
+
+    const target = elements.find((element) => element.id === id) ?? null;
+    if (!id || !target) {
+      showToast({
+        message: "Select an element before deleting.",
+        type: "info",
+      });
+      return;
+    }
+
+    if (target.locked) {
+      showToast({
+        message: "Locked element cannot be deleted.",
+        type: "error",
+      });
+      return;
+    }
+
+    removeElement(id);
+  }
+
+  function handleCopyElement(id = selectedElementId) {
+    const target = elements.find((element) => element.id === id) ?? null;
+
+    if (!target) {
+      showToast({
+        message: "Select an element before copying.",
+        type: "info",
+      });
+      return;
+    }
+
+    setCopiedElement(target);
+  }
+
+  function handlePasteElement() {
+    if (!copiedElement) {
+      showToast({
+        message: "Copy an element before pasting.",
+        type: "info",
+      });
+      return;
+    }
+
+    addElement(cloneElement(copiedElement, getMaxZIndex(elements) + 1));
+  }
+
+  function handleContextAction(action, id) {
+    if (action === "paste") {
+      handlePasteElement();
+      return;
+    }
+
+    const target = elements.find((element) => element.id === id) ?? null;
+
+    if (!target) {
+      return;
+    }
+
+    selectElement(id);
+
+    if (action === "delete") {
+      handleDeleteElement(id);
+      return;
+    }
+
+    if (action === "forward") {
+      moveElementLayer(id, "front");
+      return;
+    }
+
+    if (action === "backward") {
+      moveElementLayer(id, "back");
+      return;
+    }
+
+    if (action === "front") {
+      moveElementLayerTo(id, "front");
+      return;
+    }
+
+    if (action === "back") {
+      moveElementLayerTo(id, "back");
+      return;
+    }
+
+    if (action === "copy") {
+      handleCopyElement(id);
+      return;
+    }
+
+    if (action === "duplicate") {
+      setCopiedElement(target);
+      addElement(cloneElement(target, getMaxZIndex(elements) + 1));
+    }
+  }
+
+  function handleElementFieldChange(field, value) {
+    if (selectedElementIds.length > 1) {
+      const editableIds = selectedElements
+        .filter((element) => !element.locked && field in element)
+        .map((element) => element.id);
+
+      if (!editableIds.length) {
+        showToast({
+          message: "Selected elements cannot use this property.",
+          type: "info",
+        });
+        return;
+      }
+
+      updateElements(editableIds, {
+        [field]: value,
+      });
+      return;
+    }
+
+    if (!selectedElementId) {
+      return;
+    }
+
+    if (selectedElement?.locked) {
+      showToast({
+        message: "Locked element cannot be edited.",
+        type: "error",
+      });
+      return;
+    }
+
+    updateElement(selectedElementId, {
+      [field]: value,
+    });
   }
 
   function buildValidatedJson() {
@@ -273,10 +447,6 @@ export function OverlayEditorPage() {
         elements={elements}
         isUploading={isUploading}
         jsonPreview={jsonPreview}
-        onAddCircle={() => handleAddElement("circle")}
-        onAddLine={() => handleAddElement("line")}
-        onAddRect={() => handleAddElement("rect")}
-        onCanvasChange={setCanvas}
         onCanvasSelect={selectElement}
         onClosePreview={() =>
           setJsonPreview((current) => ({
@@ -284,54 +454,20 @@ export function OverlayEditorPage() {
             open: false,
           }))
         }
-        onDelete={() => {
-          if (!selectedElementId) {
-            showToast({
-              message: "Select an element before deleting.",
-              type: "info",
-            });
-            return;
-          }
-
-          if (selectedElement?.locked) {
-            showToast({
-              message: "Locked element cannot be deleted.",
-              type: "error",
-            });
-            return;
-          }
-
-          removeElement(selectedElementId);
-        }}
+        canPasteElement={Boolean(copiedElement)}
+        onCopySelected={handleCopyElement}
+        onDelete={() => handleDeleteElement()}
         onDragElement={moveElement}
-        onElementFieldChange={(field, value) => {
-          if (!selectedElementId) {
-            return;
-          }
-
-          if (selectedElement?.locked) {
-            showToast({
-              message: "Locked element cannot be edited.",
-              type: "error",
-            });
-            return;
-          }
-
-          updateElement(selectedElementId, {
-            [field]: value,
-          });
-        }}
+        onDrawCircle={handleDrawCircle}
+        onDrawRect={handleDrawRect}
+        onElementContextAction={handleContextAction}
+        onElementFieldChange={handleElementFieldChange}
         onExportJson={handleExportJson}
         onImportJson={handleImportClick}
-        onMetaChange={setOverlayMeta}
         onMoveBack={(id) => moveElementLayer(id ?? selectedElementId, "back")}
         onMoveFront={(id) => moveElementLayer(id ?? selectedElementId, "front")}
-        onOpacityChange={(value) =>
-          setOverlaySettings({
-            opacity: value,
-          })
-        }
         onOpenPreview={handlePreview}
+        onPasteElement={handlePasteElement}
         onReset={() => {
           if (isDirty && !window.confirm("현재 편집 내용을 초기화하시겠습니까?")) {
             return;
@@ -339,13 +475,15 @@ export function OverlayEditorPage() {
 
           resetEditor();
         }}
-        onSelectElement={selectElement}
+        onResizeElement={updateElement}
         onSelectMode={setEditorMode}
+        onSelectElements={selectElements}
+        onToggleElementSelection={toggleElementSelection}
         onUpload={handleUpload}
-        opacity={opacity}
-        overlayMeta={overlayMeta}
         selectedElement={selectedElement}
         selectedElementId={selectedElementId}
+        selectedElementIds={selectedElementIds}
+        selectedElements={selectedElements}
       />
       <UnsavedChangesModal
         open={blocker.state === "blocked"}
@@ -375,4 +513,40 @@ function UnsavedChangesModal({ open, onLeave, onStay }) {
       </div>
     </Modal>
   );
+}
+
+function cloneElement(element, zIndex) {
+  const id =
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `${element.type}-${Date.now()}`;
+  const copy = {
+    ...element,
+    id,
+    zIndex,
+  };
+
+  if (element.type === "line") {
+    return {
+      ...copy,
+      x1: element.x1 + 24,
+      x2: element.x2 + 24,
+      y1: element.y1 + 24,
+      y2: element.y2 + 24,
+    };
+  }
+
+  return {
+    ...copy,
+    x: element.x + 24,
+    y: element.y + 24,
+  };
+}
+
+function getMaxZIndex(elements) {
+  if (!elements.length) {
+    return 0;
+  }
+
+  return Math.max(...elements.map((element) => element.zIndex ?? 0));
 }

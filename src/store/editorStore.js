@@ -56,6 +56,7 @@ export function addElement(element) {
       ...state,
       elements: [...state.elements, element],
       selectedElementId: element.id,
+      selectedElementIds: [element.id],
     }),
   );
 }
@@ -111,6 +112,20 @@ export function removeElement(id) {
       ...state,
       elements: state.elements.filter((element) => element.id !== id),
       selectedElementId: state.selectedElementId === id ? null : state.selectedElementId,
+      selectedElementIds: (state.selectedElementIds ?? []).filter((elementId) => elementId !== id),
+    }),
+  );
+}
+
+export function removeElements(ids) {
+  const idSet = new Set(ids);
+
+  editorStore.setState((state) =>
+    withDirtyState({
+      ...state,
+      elements: state.elements.filter((element) => !idSet.has(element.id)),
+      selectedElementId: idSet.has(state.selectedElementId) ? null : state.selectedElementId,
+      selectedElementIds: (state.selectedElementIds ?? []).filter((elementId) => !idSet.has(elementId)),
     }),
   );
 }
@@ -119,7 +134,55 @@ export function selectElement(id) {
   editorStore.setState((state) => ({
     ...state,
     selectedElementId: id,
+    selectedElementIds: id ? [id] : [],
   }));
+}
+
+export function selectElements(ids) {
+  const selectedElementIds = Array.from(new Set(ids.filter(Boolean)));
+
+  editorStore.setState((state) => ({
+    ...state,
+    selectedElementId: selectedElementIds.length === 1 ? selectedElementIds[0] : null,
+    selectedElementIds,
+  }));
+}
+
+export function toggleElementSelection(id) {
+  if (!id) {
+    return;
+  }
+
+  editorStore.setState((state) => {
+    const currentIds = state.selectedElementIds ?? [];
+    const selectedElementIds = currentIds.includes(id)
+      ? currentIds.filter((elementId) => elementId !== id)
+      : [...currentIds, id];
+
+    return {
+      ...state,
+      selectedElementId: selectedElementIds.length === 1 ? selectedElementIds[0] : null,
+      selectedElementIds,
+    };
+  });
+}
+
+export function updateElements(ids, patch) {
+  const idSet = new Set(ids);
+
+  editorStore.setState((state) =>
+    withDirtyState({
+      ...state,
+      elements: state.elements.map((element) =>
+        idSet.has(element.id)
+          ? {
+              ...element,
+              ...patch,
+            }
+          : element,
+      ),
+    }),
+  );
 }
 
 export function setEditorMode(mode) {
@@ -148,6 +211,54 @@ export function moveElementLayer(id, direction) {
   );
 }
 
+export function moveElementLayerTo(id, position) {
+  editorStore.setState((state) => {
+    const target = state.elements.find((element) => element.id === id);
+
+    if (!target) {
+      return state;
+    }
+
+    const others = state.elements
+      .filter((element) => element.id !== id)
+      .slice()
+      .sort((left, right) => left.zIndex - right.zIndex);
+
+    if (position === "back") {
+      const zIndexById = new Map(others.map((element, index) => [element.id, index + 1]));
+
+      return withDirtyState({
+        ...state,
+        elements: state.elements.map((element) =>
+          element.id === id
+            ? {
+                ...element,
+                zIndex: 0,
+              }
+            : {
+                ...element,
+                zIndex: zIndexById.get(element.id) ?? element.zIndex,
+              },
+        ),
+      });
+    }
+
+    const maxZIndex = Math.max(0, ...others.map((element) => element.zIndex ?? 0));
+
+    return withDirtyState({
+      ...state,
+      elements: state.elements.map((element) =>
+        element.id === id
+          ? {
+              ...element,
+              zIndex: maxZIndex + 1,
+            }
+          : element,
+      ),
+    });
+  });
+}
+
 export function loadFromOverlayJson(json) {
   editorStore.setState((state) => ({
     ...state,
@@ -172,6 +283,7 @@ export function loadFromOverlayJson(json) {
         }))
       : [],
     selectedElementId: null,
+    selectedElementIds: [],
     isDirty: false,
   }));
 }
