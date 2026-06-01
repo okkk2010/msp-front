@@ -1,0 +1,16 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "build": {
+    "env": {
+      "VITE_API_BASE_URL": "https://api.msp-overlay.store",
+      "VITE_GOOGLE_LOGIN_URL": "https://api.msp-overlay.store/api/auth/google"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
