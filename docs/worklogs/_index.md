@@ -1,5 +1,8 @@
 # Worklogs
 
+- [2026-05-28_fix-dev-api-cors-proxy.md](./2026-05-28_fix-dev-api-cors-proxy.md)
+- [2026-05-28_fix-upload-category-loading.md](./2026-05-28_fix-upload-category-loading.md)
+- [2026-05-28_add-upload-preview-meta-modal.md](./2026-05-28_add-upload-preview-meta-modal.md)
 - [2026-05-28_remove-quick-add-toolbar-section.md](./2026-05-28_remove-quick-add-toolbar-section.md)
 - [2026-05-28_add-multi-select-property-editing.md](./2026-05-28_add-multi-select-property-editing.md)
 - [2026-05-28_add-canvas-paste-menu-and-copy-shortcuts.md](./2026-05-28_add-canvas-paste-menu-and-copy-shortcuts.md)

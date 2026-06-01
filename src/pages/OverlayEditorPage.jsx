@@ -5,6 +5,7 @@ import { createOverlay } from "../api/overlayApi";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { OverlayEditor } from "../components/editor/OverlayEditor";
+import { UploadOverlayModal } from "../components/editor/UploadOverlayModal";
 import { ROUTES } from "../constants/routes";
 import { useToast } from "../hooks/useToast";
 import {
@@ -18,6 +19,7 @@ import {
   selectElement,
   selectElements,
   setEditorMode,
+  setOverlayMeta,
   toggleElementSelection,
   updateElement,
   updateElements,
@@ -39,6 +41,7 @@ export function OverlayEditorPage() {
   const fileInputRef = useRef(null);
   const hasInitializedRef = useRef(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [shouldBypassExitGuard, setShouldBypassExitGuard] = useState(false);
   const [jsonPreview, setJsonPreview] = useState({
     open: false,
@@ -412,6 +415,7 @@ export function OverlayEditorPage() {
         type: "success",
       });
 
+      setIsUploadModalOpen(false);
       setShouldBypassExitGuard(true);
       resetEditor();
 
@@ -479,11 +483,21 @@ export function OverlayEditorPage() {
         onSelectMode={setEditorMode}
         onSelectElements={selectElements}
         onToggleElementSelection={toggleElementSelection}
-        onUpload={handleUpload}
+        onUpload={() => setIsUploadModalOpen(true)}
         selectedElement={selectedElement}
         selectedElementId={selectedElementId}
         selectedElementIds={selectedElementIds}
         selectedElements={selectedElements}
+      />
+      <UploadOverlayModal
+        canvas={canvas}
+        elements={elements}
+        isUploading={isUploading}
+        onClose={() => setIsUploadModalOpen(false)}
+        onMetaChange={setOverlayMeta}
+        onSubmit={handleUpload}
+        open={isUploadModalOpen}
+        overlayMeta={overlayMeta}
       />
       <UnsavedChangesModal
         open={blocker.state === "blocked"}
