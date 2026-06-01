@@ -16,6 +16,10 @@ export function validateUploadFields(editorState) {
     errors.push("Platform is required.");
   }
 
+  if (!overlayMeta.gameId) {
+    errors.push("Category is required.");
+  }
+
   if (!Number.isFinite(Number(canvas.baseWidth)) || Number(canvas.baseWidth) <= 0) {
     errors.push("Canvas width must be greater than 0.");
   }

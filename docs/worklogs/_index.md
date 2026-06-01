@@ -1,5 +1,6 @@
 # Worklogs
 
+- [2026-06-01_require-category-before-upload.md](./2026-06-01_require-category-before-upload.md)
 - [2026-05-28_fix-dev-api-cors-proxy.md](./2026-05-28_fix-dev-api-cors-proxy.md)
 - [2026-05-28_fix-upload-category-loading.md](./2026-05-28_fix-upload-category-loading.md)
 - [2026-05-28_add-upload-preview-meta-modal.md](./2026-05-28_add-upload-preview-meta-modal.md)

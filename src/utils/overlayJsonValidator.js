@@ -29,6 +29,18 @@ export function validateOverlayJson(json) {
     errors.push("platform is required.");
   }
 
+  if (!json.game || typeof json.game !== "object") {
+    errors.push("game is required.");
+  } else {
+    if (!json.game.id) {
+      errors.push("game.id is required.");
+    }
+
+    if (!json.game.name?.trim()) {
+      errors.push("game.name is required.");
+    }
+  }
+
   if (!json.canvas || typeof json.canvas !== "object") {
     errors.push("canvas is required.");
   } else {

@@ -159,6 +159,7 @@ export function UploadOverlayModal({
                   gameName: selected?.displayName ?? "",
                 });
               }}
+              required
               value={overlayMeta.gameId ?? ""}
             >
               <option value="">{isGameLoading ? "Loading categories..." : "Select category"}</option>
