@@ -38,6 +38,14 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: ROUTES.editorCustomize,
+        element: (
+          <ProtectedRoute>
+            <OverlayEditorPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: ROUTES.editorClone,
         element: (
           <ProtectedRoute>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useBeforeUnload, useBlocker, useNavigate, useParams } from "react-router-dom";
+import { useBeforeUnload, useBlocker, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { fetchGamesByPlatform } from "../api/gameApi";
 import { createOverlay, fetchOverlayDetail, updateOverlay } from "../api/overlayApi";
@@ -39,7 +39,11 @@ import { buildAssetUrl } from "../utils/assetUrl";
 
 export function OverlayEditorPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { overlayId } = useParams();
+  const isCustomizeRoute = location.pathname.startsWith("/editor/customize/");
+  const sourceOverlayId = isCustomizeRoute ? overlayId : null;
+  const editOverlayId = isCustomizeRoute ? null : overlayId;
   const { showToast } = useToast();
   const fileInputRef = useRef(null);
   const hasInitializedRef = useRef(false);
@@ -67,7 +71,9 @@ export function OverlayEditorPage() {
   const selectedElement = elements.find((element) => element.id === selectedElementId) ?? null;
   const selectedElements = elements.filter((element) => selectedElementIds.includes(element.id));
   const shouldWarnOnExit = isDirty && !isUploading && !shouldBypassExitGuard;
-  const isEditMode = Boolean(overlayId);
+  const isEditMode = Boolean(editOverlayId);
+  const isCustomizeMode = Boolean(sourceOverlayId);
+  const loadOverlayId = editOverlayId ?? sourceOverlayId;
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
       shouldWarnOnExit && currentLocation.pathname !== nextLocation.pathname,
@@ -80,13 +86,13 @@ export function OverlayEditorPage() {
 
     hasInitializedRef.current = true;
 
-    if (!overlayId) {
+    if (!loadOverlayId) {
       resetEditor();
     }
-  }, [overlayId]);
+  }, [loadOverlayId]);
 
   useEffect(() => {
-    if (!overlayId) {
+    if (!loadOverlayId) {
       return;
     }
 
@@ -95,7 +101,7 @@ export function OverlayEditorPage() {
     setIsLoadingExisting(true);
     setLoadError("");
 
-    fetchOverlayDetail(overlayId)
+    fetchOverlayDetail(loadOverlayId)
       .then(async (detail) => {
         const jsonUrl = buildAssetUrl(detail?.jsonPath);
         if (!jsonUrl) {
@@ -115,11 +121,13 @@ export function OverlayEditorPage() {
           ? games.find((game) => game.slug === detail.game || String(game.id) === String(overlayJson.game?.id))
           : null;
 
+        const nextCode = isCustomizeMode ? generateCode() : detail.code ?? extractCodeFromOverlayId(detail.overlayId);
+
         loadFromOverlayJson(overlayJson, {
-          overlayId: detail.overlayId,
-          name: detail.name ?? overlayJson.name,
+          overlayId: isCustomizeMode ? "" : detail.overlayId,
+          name: isCustomizeMode ? `${detail.name ?? overlayJson.name} Copy` : detail.name ?? overlayJson.name,
           description: detail.description ?? overlayJson.description ?? "",
-          code: detail.code ?? extractCodeFromOverlayId(detail.overlayId),
+          code: nextCode,
           platform: detail.platform ?? overlayJson.platform,
           gameId: matchedGame?.id ?? overlayJson.game?.id ?? null,
           gameName: matchedGame?.displayName ?? overlayJson.game?.name ?? detail.game ?? "",
@@ -144,7 +152,7 @@ export function OverlayEditorPage() {
     return () => {
       active = false;
     };
-  }, [overlayId]);
+  }, [isCustomizeMode, loadOverlayId]);
 
   useEffect(() => {
     if (!shouldWarnOnExit && blocker.state === "blocked") {
@@ -428,7 +436,20 @@ export function OverlayEditorPage() {
         return;
       }
 
-      loadFromOverlayJson(parsed);
+      loadFromOverlayJson(
+        parsed,
+        isEditMode
+          ? {
+              overlayId: editOverlayId,
+              code: overlayMeta.code,
+            }
+          : isCustomizeMode
+            ? {
+                overlayId: "",
+                code: generateCode(),
+              }
+            : {},
+      );
       setJsonPreview((current) => ({
         ...current,
         open: false,
@@ -479,11 +500,15 @@ export function OverlayEditorPage() {
         thumbnail,
       });
       const saved = isEditMode
-        ? await updateOverlay(overlayId, formData)
+        ? await updateOverlay(editOverlayId, formData)
         : await createOverlay(formData);
 
       showToast({
-        message: isEditMode ? "Overlay updated successfully." : "Overlay uploaded successfully.",
+        message: isEditMode
+          ? "Overlay updated successfully."
+          : isCustomizeMode
+            ? "Custom overlay created successfully."
+            : "Overlay uploaded successfully.",
         type: "success",
       });
 
@@ -491,7 +516,7 @@ export function OverlayEditorPage() {
       setShouldBypassExitGuard(true);
       resetEditor();
 
-      const nextOverlayId = saved?.overlayId ?? overlayId;
+      const nextOverlayId = saved?.overlayId ?? editOverlayId;
       if (nextOverlayId) {
         navigate(ROUTES.overlayDetail.replace(":overlayId", nextOverlayId));
         return;
@@ -511,7 +536,9 @@ export function OverlayEditorPage() {
   if (isLoadingExisting) {
     return (
       <section className="flex h-[calc(100vh-7rem)] items-center justify-center">
-        <p className="text-sm text-[var(--color-text-sub)]">Loading overlay for editing...</p>
+        <p className="text-sm text-[var(--color-text-sub)]">
+          {isCustomizeMode ? "Loading overlay for customization..." : "Loading overlay for editing..."}
+        </p>
       </section>
     );
   }
@@ -576,7 +603,7 @@ export function OverlayEditorPage() {
         onSelectElements={selectElements}
         onToggleElementSelection={toggleElementSelection}
         onUpload={() => setIsUploadModalOpen(true)}
-        uploadActionLabel={isEditMode ? "Save Changes" : "Upload"}
+        uploadActionLabel={isEditMode ? "Save Changes" : isCustomizeMode ? "Create Overlay" : "Upload"}
         selectedElement={selectedElement}
         selectedElementId={selectedElementId}
         selectedElementIds={selectedElementIds}
@@ -592,6 +619,7 @@ export function OverlayEditorPage() {
         onSubmit={handleUpload}
         open={isUploadModalOpen}
         overlayMeta={overlayMeta}
+        submitLabel={isEditMode ? "Save Changes" : isCustomizeMode ? "Create Overlay" : "Upload"}
       />
       <UnsavedChangesModal
         open={blocker.state === "blocked"}
@@ -622,6 +650,11 @@ function extractCodeFromOverlayId(overlayId) {
   }
 
   return value.toUpperCase();
+}
+
+function generateCode() {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  return Array.from({ length: 6 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
 }
 
 function UnsavedChangesModal({ open, onLeave, onStay }) {

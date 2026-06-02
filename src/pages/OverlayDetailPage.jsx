@@ -21,7 +21,7 @@ import { formatRelativeDate } from "../utils/dateFormat";
 export function OverlayDetailPage() {
   const navigate = useNavigate();
   const { overlayId } = useParams();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { showToast } = useToast();
   const [detail, setDetail] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -107,7 +107,7 @@ export function OverlayDetailPage() {
       return;
     }
 
-    navigate(`/editor/${detail.overlayId}`);
+    navigate(`/editor/customize/${detail.overlayId}`);
   }
 
   function handleDownloadJson() {
@@ -150,6 +150,8 @@ export function OverlayDetailPage() {
     );
   }
 
+  const canEdit = isAuthenticated && String(user?.id ?? "") === String(detail.author?.id ?? "");
+
   return (
     <section className="space-y-6">
       <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_380px]">
@@ -157,7 +159,7 @@ export function OverlayDetailPage() {
         <div className="space-y-4">
           <OverlayDetailInfo detail={detail} />
           <div className="grid gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm sm:grid-cols-2 2xl:grid-cols-1">
-            {isAuthenticated ? (
+            {canEdit ? (
               <Button onClick={() => navigate(`/editor/${detail.overlayId}`)} variant="secondary">
                 Edit Overlay
               </Button>
@@ -165,9 +167,11 @@ export function OverlayDetailPage() {
             <Button disabled={isSaving} onClick={handleSaveToLibrary}>
               {isSaving ? "Saving..." : "Save to Library"}
             </Button>
-            <Button onClick={handleUseAsTemplate} variant="secondary">
-              Use as Template
-            </Button>
+            {!canEdit ? (
+              <Button onClick={handleUseAsTemplate} variant="secondary">
+                Customize Overlay
+              </Button>
+            ) : null}
             <Button onClick={handleDownloadJson} variant="secondary">
               Download JSON
             </Button>

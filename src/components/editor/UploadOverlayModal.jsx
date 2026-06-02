@@ -12,6 +12,7 @@ export function UploadOverlayModal({
   canvas,
   elements,
   isUploading,
+  submitLabel,
   mode = "create",
   onClose,
   onMetaChange,
@@ -90,6 +91,7 @@ export function UploadOverlayModal({
   }, [open, overlayMeta.platform]);
 
   const isEditMode = mode === "edit";
+  const resolvedSubmitLabel = submitLabel ?? (isEditMode ? "Save Changes" : "Upload");
 
   return (
     <Modal
@@ -183,7 +185,7 @@ export function UploadOverlayModal({
             Cancel
           </Button>
           <Button disabled={isUploading} type="submit" variant="primary">
-            {isUploading ? "Saving..." : isEditMode ? "Save Changes" : "Upload"}
+            {isUploading ? "Saving..." : resolvedSubmitLabel}
           </Button>
         </div>
       </form>
