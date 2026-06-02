@@ -195,15 +195,15 @@ function PreviewCard({ detail }) {
   return (
     <Card className="overflow-hidden p-0">
       {detail.thumbnailUrl ? (
-        <div className="flex min-h-[420px] items-center justify-center bg-[var(--color-canvas-bg)] p-3">
+        <div className="flex aspect-video max-h-[calc(100vh-180px)] min-h-[320px] w-full items-center justify-center bg-[var(--color-canvas-bg)] p-3">
           <img
             alt={`${detail.name} preview`}
-            className="max-h-[70vh] w-full object-contain"
+            className="h-full w-full object-contain"
             src={detail.thumbnailUrl}
           />
         </div>
       ) : (
-        <div className="flex min-h-[420px] w-full flex-col items-center justify-center bg-[var(--color-surface-soft)]">
+        <div className="flex aspect-video min-h-[320px] w-full flex-col items-center justify-center bg-[var(--color-surface-soft)]">
           <strong className="text-lg font-semibold">MSP Overlay</strong>
           <span className="mt-2 text-sm text-[var(--color-text-sub)]">No preview uploaded</span>
         </div>
