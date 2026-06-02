@@ -1,6 +1,6 @@
 import { Card } from "../common/Card";
 
-export function OverlayElementSummary({ detail }) {
+export function OverlayElementSummary() {
   return (
     <Card className="space-y-3 p-6">
       <h2 className="text-lg font-semibold">Element Summary</h2>
