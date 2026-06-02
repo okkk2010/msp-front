@@ -150,7 +150,15 @@ export function OverlayDetailPage() {
     );
   }
 
-  const canEdit = isAuthenticated && String(user?.id ?? "") === String(detail.author?.id ?? "");
+  const userId = user?.id;
+  const authorId = detail.author?.id;
+  const canEdit =
+    isAuthenticated &&
+    userId !== null &&
+    userId !== undefined &&
+    authorId !== null &&
+    authorId !== undefined &&
+    String(userId) === String(authorId);
 
   return (
     <section className="space-y-6">
