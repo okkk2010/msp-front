@@ -9,8 +9,6 @@ import { EmptyState } from "../components/common/EmptyState";
 import { ErrorMessage } from "../components/common/ErrorMessage";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { OverlayDetailInfo } from "../components/overlay/OverlayDetailInfo";
-import { OverlayElementSummary } from "../components/overlay/OverlayElementSummary";
-import { OverlayJsonSummary } from "../components/overlay/OverlayJsonSummary";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
 import { markOverlaySaved } from "../store/libraryStore";
@@ -188,11 +186,6 @@ export function OverlayDetailPage() {
             </Button>
           </div>
         </div>
-      </div>
-
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-        <OverlayJsonSummary detail={detail} />
-        <OverlayElementSummary />
       </div>
     </section>
   );
