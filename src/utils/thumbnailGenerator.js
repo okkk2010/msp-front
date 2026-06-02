@@ -1,6 +1,12 @@
 export async function generateThumbnail(overlayJson) {
   const width = 640;
   const height = 360;
+  const canvasBackground = "#f8fafc";
+  const gridColor = "#cbd5e1";
+  const labelBackground = "rgba(255, 255, 255, 0.88)";
+  const labelBorder = "#d7dee8";
+  const labelText = "#101828";
+  const labelSubText = "#667085";
   const shapes = (overlayJson.elements ?? [])
     .filter((element) => element.visible !== false)
     .map((element) => renderElement(element))
@@ -8,24 +14,18 @@ export async function generateThumbnail(overlayJson) {
 
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${overlayJson.canvas.baseWidth} ${overlayJson.canvas.baseHeight}">
-      <defs>
-        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#0f172a" />
-          <stop offset="100%" stop-color="#111827" />
-        </linearGradient>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#bg)" />
-      <g opacity="0.08">
-        ${buildGrid(overlayJson.canvas.baseWidth, overlayJson.canvas.baseHeight)}
+      <rect width="100%" height="100%" fill="${canvasBackground}" />
+      <g opacity="1">
+        ${buildGrid(overlayJson.canvas.baseWidth, overlayJson.canvas.baseHeight, gridColor)}
       </g>
       <g opacity="${overlayJson.overlaySettings.opacity}">
         ${shapes}
       </g>
-      <rect x="28" y="28" width="420" height="96" rx="20" fill="rgba(15, 23, 42, 0.78)" />
-      <text x="56" y="74" fill="#f8fafc" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="700">
+      <rect x="28" y="28" width="420" height="96" rx="14" fill="${labelBackground}" stroke="${labelBorder}" stroke-width="2" />
+      <text x="56" y="74" fill="${labelText}" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="700">
         ${escapeXml(overlayJson.name || "MSP Overlay")}
       </text>
-      <text x="56" y="108" fill="#94a3b8" font-family="Segoe UI, Arial, sans-serif" font-size="18">
+      <text x="56" y="108" fill="${labelSubText}" font-family="Segoe UI, Arial, sans-serif" font-size="18">
         ${escapeXml(overlayJson.overlayId || "")}
       </text>
     </svg>
@@ -96,15 +96,15 @@ function renderElement(element) {
   return `<line x1="${element.x1}" y1="${element.y1}" x2="${element.x2}" y2="${element.y2}" stroke="${escapeXml(element.strokeColor)}" stroke-width="${element.strokeWidth}" stroke-linecap="round" stroke-dasharray="${getDashArray(element.dashStyle)}" opacity="${opacity}" />`;
 }
 
-function buildGrid(width, height) {
+function buildGrid(width, height, strokeColor) {
   const vertical = Array.from({ length: Math.ceil(width / 160) + 1 }, (_, index) => {
     const x = index * 160;
-    return `<line x1="${x}" y1="0" x2="${x}" y2="${height}" stroke="#ffffff" stroke-width="1" />`;
+    return `<line x1="${x}" y1="0" x2="${x}" y2="${height}" stroke="${strokeColor}" stroke-width="1" />`;
   }).join("");
 
   const horizontal = Array.from({ length: Math.ceil(height / 160) + 1 }, (_, index) => {
     const y = index * 160;
-    return `<line x1="0" y1="${y}" x2="${width}" y2="${y}" stroke="#ffffff" stroke-width="1" />`;
+    return `<line x1="0" y1="${y}" x2="${width}" y2="${y}" stroke="${strokeColor}" stroke-width="1" />`;
   }).join("");
 
   return vertical + horizontal;

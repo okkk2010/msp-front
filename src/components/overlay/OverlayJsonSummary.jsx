@@ -19,8 +19,8 @@ export function OverlayJsonSummary({ detail }) {
 
 function SummaryItem({ label, value }) {
   return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] p-4">
-      <dt className="text-xs uppercase tracking-[0.15em]">{label}</dt>
+    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-soft)] p-4">
+      <dt className="text-xs font-semibold uppercase">{label}</dt>
       <dd className="mt-2 text-sm font-medium text-[var(--color-text-main)]">{value}</dd>
     </div>
   );

@@ -1,8 +1,8 @@
 const VARIANT_CLASS = {
   primary:
-    "bg-[var(--color-primary)] text-[var(--color-bg)] hover:brightness-110",
+    "bg-[var(--color-primary)] text-white shadow-sm hover:brightness-105",
   secondary:
-    "border border-[var(--color-border)] bg-[var(--color-surface-soft)] text-[var(--color-text-main)] hover:border-[var(--color-primary)]",
+    "border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-main)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]",
   ghost:
     "bg-transparent text-[var(--color-text-sub)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text-main)]",
 };
@@ -20,7 +20,7 @@ export function Button({
   return (
     <Component
       className={[
-        "inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition",
+        "inline-flex min-w-0 items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold leading-5 transition disabled:cursor-not-allowed disabled:opacity-60",
         VARIANT_CLASS[variant],
         className,
       ].join(" ")}

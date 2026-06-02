@@ -17,6 +17,8 @@ import { markOverlaySaved } from "../store/libraryStore";
 import { getApiErrorMessage } from "../utils/apiError";
 import { formatRelativeDate } from "../utils/dateFormat";
 
+const DEFAULT_GAME_PLATFORM = "windows";
+
 export function OverlayListPage() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
@@ -66,21 +68,15 @@ export function OverlayListPage() {
 
   useEffect(() => {
     let active = true;
+    const gamePlatform = filters.platform || DEFAULT_GAME_PLATFORM;
 
-    if (!filters.platform) {
-      setGames([]);
-      return () => {
-        active = false;
-      };
-    }
-
-    fetchGamesByPlatform(filters.platform)
+    fetchGamesByPlatform(gamePlatform)
       .then((data) => {
         if (!active) {
           return;
         }
 
-        setGames(Array.isArray(data) ? data : []);
+        setGames(normalizeGameItems(data));
       })
       .catch(() => {
         if (!active) {
@@ -134,7 +130,7 @@ export function OverlayListPage() {
   async function handleSave(item) {
     if (!isAuthenticated) {
       showToast({
-        message: "로그인이 필요한 기능입니다.",
+        message: "Log in to save overlays to your library.",
         type: "info",
       });
       navigate("/library");
@@ -156,7 +152,7 @@ export function OverlayListPage() {
         ),
       );
       showToast({
-        message: "라이브러리에 저장했습니다.",
+        message: "Saved to your library.",
         type: "success",
       });
     } catch (requestError) {
@@ -168,61 +164,90 @@ export function OverlayListPage() {
   }
 
   return (
-    <section className="space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-semibold">Overlay Discover</h1>
-        <p className="text-sm text-[var(--color-text-sub)]">
-          Find overlay layouts for comfortable 3D gameplay.
-        </p>
-      </div>
-      <div className="grid gap-4 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 lg:grid-cols-[minmax(0,1fr)_180px_180px_auto]">
-        <OverlaySearchBar
-          onChange={(event) => setKeyword(event.target.value)}
-          value={filters.keyword}
-        />
-        <OverlayCodeSearch
-          onChange={(event) => setCode(event.target.value.toUpperCase())}
-          value={filters.code}
-        />
-        <div className="flex items-end">
-          <Button className="w-full" onClick={() => navigate("/editor")}>
-            Create Overlay
-          </Button>
+    <section className="space-y-6">
+      <div className="flex flex-col gap-4 border-b border-[var(--color-border)] pb-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase text-[var(--color-primary)]">Community overlays</p>
+          <h1 className="text-3xl font-semibold">Find a layout that already works</h1>
+          <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-sub)]">
+            Browse overlays shared by other players, compare preview quality, and save useful layouts before editing.
+          </p>
         </div>
-      </div>
-      <OverlayFilterBar
-        filters={filters}
-        games={games}
-        onGameChange={(event) => setGame(event.target.value)}
-        onPlatformChange={(event) => setPlatform(event.target.value)}
-        onReset={resetFilters}
-        onSelectCategory={(tab) => {
-          setPlatform(tab.platform);
-          setSort(tab.sort);
-        }}
-        onSortChange={(event) => setSort(event.target.value)}
-        platforms={platforms}
-      />
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-[var(--color-text-sub)]">
-          page {filters.page + 1} · size {filters.size}
-        </p>
-        <Button onClick={resetFilters} variant="ghost">
-          Clear Search
+        <Button className="w-full lg:w-auto" onClick={() => navigate("/editor")}>
+          Create Overlay
         </Button>
       </div>
-      <OverlayGrid
-        error={error}
-        isLoading={isLoading}
-        items={items}
-        onCardClick={(item) => navigate(`/overlays/${item.overlayId}`)}
-        onRetry={() => {
-          setReloadNonce((value) => value + 1);
-        }}
-        onSave={handleSave}
-      />
+
+      <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
+        <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
+          <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
+            <div className="space-y-4">
+              <OverlaySearchBar
+                onChange={(event) => setKeyword(event.target.value)}
+                value={filters.keyword}
+              />
+              <OverlayCodeSearch
+                onChange={(event) => setCode(event.target.value.toUpperCase())}
+                value={filters.code}
+              />
+            </div>
+          </div>
+          <OverlayFilterBar
+            filters={filters}
+            games={games}
+            onGameChange={(event) => setGame(event.target.value)}
+            onPlatformChange={(event) => setPlatform(event.target.value)}
+            onReset={resetFilters}
+            onSelectCategory={(tab) => {
+              setPlatform(tab.platform);
+              setSort(tab.sort);
+            }}
+            onSortChange={(event) => setSort(event.target.value)}
+            platforms={platforms}
+          />
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-[var(--color-text-main)]">
+                {isLoading ? "Loading overlays" : `${items.length} overlays found`}
+              </p>
+              <p className="text-xs text-[var(--color-text-sub)]">
+                Page {filters.page + 1} · {filters.size} per page
+              </p>
+            </div>
+            <Button onClick={resetFilters} variant="ghost">
+              Clear Search
+            </Button>
+          </div>
+          <OverlayGrid
+            error={error}
+            isLoading={isLoading}
+            items={items}
+            onCardClick={(item) => navigate(`/overlays/${item.overlayId}`)}
+            onRetry={() => {
+              setReloadNonce((value) => value + 1);
+            }}
+            onSave={handleSave}
+          />
+        </div>
+      </div>
     </section>
   );
+}
+
+function normalizeGameItems(data) {
+  const games = Array.isArray(data) ? data : [];
+
+  return games
+    .map((game) => ({
+      id: game.id ?? game.slug ?? game.displayName,
+      slug: game.slug ?? "",
+      displayName: game.displayName ?? game.name ?? game.slug ?? "Unknown game",
+      platform: game.platform ?? DEFAULT_GAME_PLATFORM,
+    }))
+    .filter((game) => game.slug || game.displayName);
 }
 
 function normalizeOverlayItems(data) {

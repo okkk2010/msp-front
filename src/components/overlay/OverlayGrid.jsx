@@ -14,12 +14,12 @@ export function OverlayGrid({
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <LoadingSpinner label="오버레이 목록을 불러오는 중입니다." />
+        <LoadingSpinner label="Loading community overlays..." />
         <div className="grid gap-4">
           {Array.from({ length: 3 }).map((_, index) => (
             <div
               key={index}
-              className="h-44 animate-pulse rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)]"
+              className="h-64 animate-pulse rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]"
             />
           ))}
         </div>
@@ -32,11 +32,11 @@ export function OverlayGrid({
       <div className="space-y-4">
         <ErrorMessage>{error}</ErrorMessage>
         <button
-          className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-main)]"
+          className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-sm font-semibold text-[var(--color-text-main)]"
           onClick={onRetry}
           type="button"
         >
-          다시 시도
+          Try again
         </button>
       </div>
     );
@@ -45,8 +45,8 @@ export function OverlayGrid({
   if (!items.length) {
     return (
       <EmptyState
-        description="검색어 또는 필터를 변경해보세요."
-        title="조건에 맞는 오버레이가 없습니다."
+        description="Try a broader keyword, clear the platform filter, or search by overlay code."
+        title="No overlays match these filters."
       />
     );
   }

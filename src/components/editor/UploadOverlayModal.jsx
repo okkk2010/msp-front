@@ -12,6 +12,7 @@ export function UploadOverlayModal({
   canvas,
   elements,
   isUploading,
+  mode = "create",
   onClose,
   onMetaChange,
   onSubmit,
@@ -88,8 +89,14 @@ export function UploadOverlayModal({
     };
   }, [open, overlayMeta.platform]);
 
+  const isEditMode = mode === "edit";
+
   return (
-    <Modal className="max-h-[90vh] max-w-5xl overflow-y-auto" open={open} title="Upload Overlay">
+    <Modal
+      className="max-h-[90vh] max-w-5xl overflow-y-auto"
+      open={open}
+      title={isEditMode ? "Save Overlay Changes" : "Upload Overlay"}
+    >
       <form
         className="grid gap-5"
         onSubmit={(event) => {
@@ -175,7 +182,7 @@ export function UploadOverlayModal({
             Cancel
           </Button>
           <Button disabled={isUploading} type="submit" variant="primary">
-            {isUploading ? "Uploading..." : "Upload"}
+            {isUploading ? "Saving..." : isEditMode ? "Save Changes" : "Upload"}
           </Button>
         </div>
       </form>
@@ -185,13 +192,13 @@ export function UploadOverlayModal({
 
 function OverlayPreview({ canvas, elements }) {
   return (
-    <div className="overflow-hidden border border-[var(--color-border)] bg-[#0f172a]">
+    <div className="overflow-hidden border border-[var(--color-canvas-frame)] bg-[var(--color-canvas-bg)]">
       <svg
         className="block h-auto w-full"
         preserveAspectRatio="xMidYMid meet"
         viewBox={`0 0 ${canvas.baseWidth} ${canvas.baseHeight}`}
       >
-        <rect fill="#0f172a" height={canvas.baseHeight} width={canvas.baseWidth} x="0" y="0" />
+        <rect fill="var(--color-canvas-bg)" height={canvas.baseHeight} width={canvas.baseWidth} x="0" y="0" />
         {elements.map((element) => (
           <PreviewElement element={element} key={element.id} />
         ))}

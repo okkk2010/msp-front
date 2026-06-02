@@ -1,5 +1,6 @@
 export const DEFAULT_EDITOR_STATE = {
   overlayMeta: {
+    overlayId: "",
     name: "",
     description: "",
     code: "",
