@@ -43,13 +43,15 @@ export function LibraryItemCard({ item, onUseAsTemplate, onViewDetail }) {
 
 function Thumbnail({ name, thumbnailUrl }) {
   return thumbnailUrl ? (
-    <img
-      alt={`${name} preview`}
-      className="aspect-video w-full rounded-2xl border border-[var(--color-border)] object-cover md:w-56"
-      src={thumbnailUrl}
-    />
+    <div className="flex aspect-video w-full items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas-bg)] md:w-56">
+      <img
+        alt={`${name} preview`}
+        className="max-h-full w-full object-contain"
+        src={thumbnailUrl}
+      />
+    </div>
   ) : (
-    <div className="flex aspect-video w-full flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface-soft)] md:w-56">
+    <div className="flex aspect-video w-full flex-col items-center justify-center rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-canvas-bg)] md:w-56">
       <strong className="text-sm font-semibold">MSP Overlay</strong>
       <span className="mt-1 text-xs text-[var(--color-text-sub)]">No Preview</span>
     </div>

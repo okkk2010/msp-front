@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { useBeforeUnload, useBlocker, useNavigate } from "react-router-dom";
+import { useBeforeUnload, useBlocker, useNavigate, useParams } from "react-router-dom";
 
-import { createOverlay } from "../api/overlayApi";
+import { fetchGamesByPlatform } from "../api/gameApi";
+import { createOverlay, fetchOverlayDetail, updateOverlay } from "../api/overlayApi";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { OverlayEditor } from "../components/editor/OverlayEditor";
@@ -34,13 +35,17 @@ import { validateOverlayJson } from "../utils/overlayJsonValidator";
 import { generateThumbnail } from "../utils/thumbnailGenerator";
 import { getApiErrorMessage } from "../utils/apiError";
 import { validateUploadFields } from "../utils/uploadValidator";
+import { buildAssetUrl } from "../utils/assetUrl";
 
 export function OverlayEditorPage() {
   const navigate = useNavigate();
+  const { overlayId } = useParams();
   const { showToast } = useToast();
   const fileInputRef = useRef(null);
   const hasInitializedRef = useRef(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoadingExisting, setIsLoadingExisting] = useState(Boolean(overlayId));
+  const [loadError, setLoadError] = useState("");
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [shouldBypassExitGuard, setShouldBypassExitGuard] = useState(false);
   const [jsonPreview, setJsonPreview] = useState({
@@ -62,6 +67,7 @@ export function OverlayEditorPage() {
   const selectedElement = elements.find((element) => element.id === selectedElementId) ?? null;
   const selectedElements = elements.filter((element) => selectedElementIds.includes(element.id));
   const shouldWarnOnExit = isDirty && !isUploading && !shouldBypassExitGuard;
+  const isEditMode = Boolean(overlayId);
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
       shouldWarnOnExit && currentLocation.pathname !== nextLocation.pathname,
@@ -73,8 +79,72 @@ export function OverlayEditorPage() {
     }
 
     hasInitializedRef.current = true;
-    resetEditor();
-  }, []);
+
+    if (!overlayId) {
+      resetEditor();
+    }
+  }, [overlayId]);
+
+  useEffect(() => {
+    if (!overlayId) {
+      return;
+    }
+
+    let active = true;
+
+    setIsLoadingExisting(true);
+    setLoadError("");
+
+    fetchOverlayDetail(overlayId)
+      .then(async (detail) => {
+        const jsonUrl = buildAssetUrl(detail?.jsonPath);
+        if (!jsonUrl) {
+          throw new Error("Overlay JSON path is unavailable.");
+        }
+
+        const [overlayJson, games] = await Promise.all([
+          fetchJsonFile(jsonUrl),
+          detail?.platform ? fetchGamesByPlatform(detail.platform).catch(() => []) : Promise.resolve([]),
+        ]);
+
+        if (!active) {
+          return;
+        }
+
+        const matchedGame = Array.isArray(games)
+          ? games.find((game) => game.slug === detail.game || String(game.id) === String(overlayJson.game?.id))
+          : null;
+
+        loadFromOverlayJson(overlayJson, {
+          overlayId: detail.overlayId,
+          name: detail.name ?? overlayJson.name,
+          description: detail.description ?? overlayJson.description ?? "",
+          code: detail.code ?? extractCodeFromOverlayId(detail.overlayId),
+          platform: detail.platform ?? overlayJson.platform,
+          gameId: matchedGame?.id ?? overlayJson.game?.id ?? null,
+          gameName: matchedGame?.displayName ?? overlayJson.game?.name ?? detail.game ?? "",
+        });
+      })
+      .catch((error) => {
+        if (!active) {
+          return;
+        }
+
+        resetEditor();
+        setLoadError(getApiErrorMessage(error));
+      })
+      .finally(() => {
+        if (!active) {
+          return;
+        }
+
+        setIsLoadingExisting(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [overlayId]);
 
   useEffect(() => {
     if (!shouldWarnOnExit && blocker.state === "blocked") {
@@ -408,10 +478,12 @@ export function OverlayEditorPage() {
         overlayJson,
         thumbnail,
       });
-      const created = await createOverlay(formData);
+      const saved = isEditMode
+        ? await updateOverlay(overlayId, formData)
+        : await createOverlay(formData);
 
       showToast({
-        message: "Overlay uploaded successfully.",
+        message: isEditMode ? "Overlay updated successfully." : "Overlay uploaded successfully.",
         type: "success",
       });
 
@@ -419,7 +491,7 @@ export function OverlayEditorPage() {
       setShouldBypassExitGuard(true);
       resetEditor();
 
-      const nextOverlayId = created?.overlayId;
+      const nextOverlayId = saved?.overlayId ?? overlayId;
       if (nextOverlayId) {
         navigate(ROUTES.overlayDetail.replace(":overlayId", nextOverlayId));
         return;
@@ -434,6 +506,26 @@ export function OverlayEditorPage() {
     } finally {
       setIsUploading(false);
     }
+  }
+
+  if (isLoadingExisting) {
+    return (
+      <section className="flex h-[calc(100vh-7rem)] items-center justify-center">
+        <p className="text-sm text-[var(--color-text-sub)]">Loading overlay for editing...</p>
+      </section>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <section className="space-y-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+        <h1 className="text-xl font-semibold">Unable to load overlay</h1>
+        <p className="text-sm text-[var(--color-text-sub)]">{loadError}</p>
+        <Button onClick={() => navigate(ROUTES.overlays)} variant="secondary">
+          Back to Discover
+        </Button>
+      </section>
+    );
   }
 
   return (
@@ -484,6 +576,7 @@ export function OverlayEditorPage() {
         onSelectElements={selectElements}
         onToggleElementSelection={toggleElementSelection}
         onUpload={() => setIsUploadModalOpen(true)}
+        uploadActionLabel={isEditMode ? "Save Changes" : "Upload"}
         selectedElement={selectedElement}
         selectedElementId={selectedElementId}
         selectedElementIds={selectedElementIds}
@@ -493,6 +586,7 @@ export function OverlayEditorPage() {
         canvas={canvas}
         elements={elements}
         isUploading={isUploading}
+        mode={isEditMode ? "edit" : "create"}
         onClose={() => setIsUploadModalOpen(false)}
         onMetaChange={setOverlayMeta}
         onSubmit={handleUpload}
@@ -509,6 +603,25 @@ export function OverlayEditorPage() {
       />
     </>
   );
+}
+
+async function fetchJsonFile(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error("Failed to load overlay JSON.");
+  }
+
+  return response.json();
+}
+
+function extractCodeFromOverlayId(overlayId) {
+  const value = String(overlayId ?? "");
+
+  if (value.startsWith("ovl_")) {
+    return value.slice(4).toUpperCase();
+  }
+
+  return value.toUpperCase();
 }
 
 function UnsavedChangesModal({ open, onLeave, onStay }) {

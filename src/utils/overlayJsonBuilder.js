@@ -2,7 +2,7 @@ import { OVERLAY_SCHEMA_VERSION } from "../constants/overlaySchema";
 
 export function buildOverlayJson(editorState) {
   const timestamp = new Date().toISOString();
-  const overlayId = buildOverlayId(editorState.overlayMeta.code);
+  const overlayId = editorState.overlayMeta.overlayId || buildOverlayId(editorState.overlayMeta.code);
 
   return {
     schemaVersion: OVERLAY_SCHEMA_VERSION,

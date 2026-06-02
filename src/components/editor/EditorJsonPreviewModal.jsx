@@ -42,7 +42,7 @@ export function EditorJsonPreviewModal({
           </div>
         ) : null}
 
-        <pre className="max-h-[420px] overflow-auto rounded-2xl border border-[var(--color-border)] bg-[#0b1220] p-4 text-xs leading-6 text-[var(--color-text-main)]">
+        <pre className="max-h-[420px] overflow-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-soft)] p-4 text-xs leading-6 text-[var(--color-text-main)]">
           <code>{jsonText}</code>
         </pre>
 

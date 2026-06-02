@@ -233,9 +233,9 @@ export function OverlayCanvas({
           </div>
         </div>
       </div>
-      <div className="relative mt-4 flex min-h-0 flex-1 items-center justify-center border border-dashed border-[var(--color-border)] bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:32px_32px] p-4">
+      <div className="relative mt-4 flex min-h-0 flex-1 items-center justify-center border border-dashed border-[var(--color-border)] bg-[linear-gradient(var(--color-canvas-grid)_1px,transparent_1px),linear-gradient(90deg,var(--color-canvas-grid)_1px,transparent_1px)] bg-[size:32px_32px] p-4">
         <div
-          className="relative w-full overflow-hidden border border-[var(--color-border)] bg-[#0f172a] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]"
+          className="relative w-full overflow-hidden border border-[var(--color-canvas-frame)] bg-[var(--color-canvas-bg)] shadow-[inset_0_0_0_1px_rgba(15,23,42,0.04)]"
           style={{ aspectRatio: `${canvas.baseWidth} / ${canvas.baseHeight}` }}
         >
           {!visibleElements.length ? (
@@ -479,11 +479,11 @@ function GridOverlay({ canvas, gridSize }) {
   const horizontalCount = Math.ceil(canvas.baseHeight / safeGridSize);
 
   return (
-    <g opacity="0.12" pointerEvents="none">
+    <g pointerEvents="none">
       {Array.from({ length: verticalCount + 1 }).map((_, index) => (
         <line
           key={`v-${index}`}
-          stroke="rgba(255,255,255,0.14)"
+          stroke={index % 5 === 0 ? "var(--color-canvas-grid-strong)" : "var(--color-canvas-grid)"}
           strokeWidth={index % 5 === 0 ? "1.5" : "1"}
           x1={index * safeGridSize}
           x2={index * safeGridSize}
@@ -494,7 +494,7 @@ function GridOverlay({ canvas, gridSize }) {
       {Array.from({ length: horizontalCount + 1 }).map((_, index) => (
         <line
           key={`h-${index}`}
-          stroke="rgba(255,255,255,0.14)"
+          stroke={index % 5 === 0 ? "var(--color-canvas-grid-strong)" : "var(--color-canvas-grid)"}
           strokeWidth={index % 5 === 0 ? "1.5" : "1"}
           x1="0"
           x2={canvas.baseWidth}

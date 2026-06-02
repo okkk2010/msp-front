@@ -2,7 +2,9 @@ export function Badge({ children, tone = "default" }) {
   const toneClass =
     tone === "primary"
       ? "border-[var(--color-primary-soft)] bg-[var(--color-primary-soft)] text-[var(--color-primary)]"
-      : "border-[var(--color-border)] bg-[var(--color-surface-soft)] text-[var(--color-text-sub)]";
+      : tone === "accent"
+        ? "border-[var(--color-accent-soft)] bg-[var(--color-accent-soft)] text-[var(--color-accent)]"
+        : "border-[var(--color-border)] bg-[var(--color-surface-soft)] text-[var(--color-text-sub)]";
 
   return (
     <span

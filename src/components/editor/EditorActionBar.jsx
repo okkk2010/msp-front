@@ -10,6 +10,7 @@ export function EditorActionBar({
   onPreview,
   onReset,
   onUpload,
+  uploadActionLabel = "Upload",
 }) {
   return (
     <Card className={["flex flex-wrap items-center justify-between gap-3 p-4", className].join(" ")}>
@@ -21,7 +22,7 @@ export function EditorActionBar({
       </div>
       <div className="flex flex-wrap gap-2 xl:w-full">
         <Button disabled={isUploading} onClick={onUpload} variant="secondary">
-          {isUploading ? "Uploading..." : "Upload"}
+          {isUploading ? "Saving..." : uploadActionLabel}
         </Button>
         <Button onClick={onPreview} variant="secondary">
           Preview

@@ -1,17 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --color-bg: #0b0f19;
-  --color-surface: #111827;
-  --color-surface-soft: #1f2937;
-  --color-border: #2d3748;
-  --color-primary: #38bdf8;
-  --color-primary-soft: rgba(56, 189, 248, 0.12);
-  --color-text-main: #f9fafb;
-  --color-text-sub: #9ca3af;
-  --color-danger: #f87171;
-  --color-success: #34d399;
-  --color-warning: #fbbf24;
+  --color-bg: #f4f6f9;
+  --color-surface: #ffffff;
+  --color-surface-soft: #eef2f6;
+  --color-border: #d7dee8;
+  --color-primary: #2563eb;
+  --color-primary-soft: rgba(37, 99, 235, 0.1);
+  --color-accent: #0f766e;
+  --color-accent-soft: rgba(15, 118, 110, 0.1);
+  --color-canvas-bg: #f8fafc;
+  --color-canvas-grid: rgba(100, 116, 139, 0.18);
+  --color-canvas-grid-strong: rgba(71, 85, 105, 0.28);
+  --color-canvas-frame: #cbd5e1;
+  --color-text-main: #101828;
+  --color-text-sub: #667085;
+  --color-danger: #dc2626;
+  --color-success: #059669;
+  --color-warning: #b45309;
   color: var(--color-text-main);
   background-color: var(--color-bg);
   font-family:
@@ -32,9 +38,7 @@ body,
 body {
   margin: 0;
   min-width: 320px;
-  background:
-    radial-gradient(circle at top, rgba(56, 189, 248, 0.08), transparent 28%),
-    var(--color-bg);
+  background: var(--color-bg);
 }
 
 .line-clamp-2 {

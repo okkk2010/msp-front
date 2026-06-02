@@ -1,21 +1,21 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { fetchOverlayDetail } from "../api/overlayApi";
 import { saveOverlayToLibrary } from "../api/libraryApi";
+import { fetchOverlayDetail } from "../api/overlayApi";
 import { Button } from "../components/common/Button";
+import { Card } from "../components/common/Card";
 import { EmptyState } from "../components/common/EmptyState";
 import { ErrorMessage } from "../components/common/ErrorMessage";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
-import { Card } from "../components/common/Card";
 import { OverlayDetailInfo } from "../components/overlay/OverlayDetailInfo";
 import { OverlayElementSummary } from "../components/overlay/OverlayElementSummary";
 import { OverlayJsonSummary } from "../components/overlay/OverlayJsonSummary";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
 import { markOverlaySaved } from "../store/libraryStore";
-import { buildAssetUrl } from "../utils/assetUrl";
 import { getApiErrorMessage } from "../utils/apiError";
+import { buildAssetUrl } from "../utils/assetUrl";
 import { formatRelativeDate } from "../utils/dateFormat";
 
 export function OverlayDetailPage() {
@@ -70,7 +70,7 @@ export function OverlayDetailPage() {
 
     if (!isAuthenticated) {
       showToast({
-        message: "로그인이 필요한 기능입니다.",
+        message: "Log in to save overlays to your library.",
         type: "info",
       });
       return;
@@ -81,7 +81,7 @@ export function OverlayDetailPage() {
       await saveOverlayToLibrary(detail.id);
       markOverlaySaved(detail.id);
       showToast({
-        message: "라이브러리에 저장했습니다.",
+        message: "Saved to your library.",
         type: "success",
       });
     } catch (requestError) {
@@ -101,7 +101,7 @@ export function OverlayDetailPage() {
 
     if (!isAuthenticated) {
       showToast({
-        message: "로그인이 필요한 기능입니다.",
+        message: "Log in to use this overlay as a template.",
         type: "info",
       });
       return;
@@ -113,7 +113,7 @@ export function OverlayDetailPage() {
   function handleDownloadJson() {
     if (!detail?.jsonUrl) {
       showToast({
-        message: "다운로드 가능한 JSON 경로가 없습니다.",
+        message: "No downloadable JSON is available for this overlay.",
         type: "info",
       });
       return;
@@ -125,7 +125,7 @@ export function OverlayDetailPage() {
   if (isLoading) {
     return (
       <section className="space-y-4">
-        <LoadingSpinner label="오버레이 상세 정보를 불러오는 중입니다." />
+        <LoadingSpinner label="Loading overlay details..." />
       </section>
     );
   }
@@ -144,33 +144,43 @@ export function OverlayDetailPage() {
   if (!detail) {
     return (
       <EmptyState
-        description="요청한 오버레이를 찾을 수 없습니다."
+        description="The requested overlay could not be found."
         title="Overlay detail is unavailable."
       />
     );
   }
 
   return (
-    <section className="space-y-8">
-      <PreviewCard detail={detail} />
-      <OverlayDetailInfo detail={detail} />
-      <div className="flex flex-wrap gap-3">
-        <Button disabled={isSaving} onClick={handleSaveToLibrary}>
-          {isSaving ? "Saving..." : "Save to Library"}
-        </Button>
-        <Button onClick={handleUseAsTemplate} variant="secondary">
-          Use as Template
-        </Button>
-        <Button onClick={handleDownloadJson} variant="secondary">
-          Download JSON
-        </Button>
-        <Button onClick={() => navigate("/overlays")} variant="ghost">
-          Back to Discover
-        </Button>
+    <section className="space-y-6">
+      <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_380px]">
+        <PreviewCard detail={detail} />
+        <div className="space-y-4">
+          <OverlayDetailInfo detail={detail} />
+          <div className="grid gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm sm:grid-cols-2 2xl:grid-cols-1">
+            {isAuthenticated ? (
+              <Button onClick={() => navigate(`/editor/${detail.overlayId}`)} variant="secondary">
+                Edit Overlay
+              </Button>
+            ) : null}
+            <Button disabled={isSaving} onClick={handleSaveToLibrary}>
+              {isSaving ? "Saving..." : "Save to Library"}
+            </Button>
+            <Button onClick={handleUseAsTemplate} variant="secondary">
+              Use as Template
+            </Button>
+            <Button onClick={handleDownloadJson} variant="secondary">
+              Download JSON
+            </Button>
+            <Button onClick={() => navigate("/overlays")} variant="ghost">
+              Back to Discover
+            </Button>
+          </div>
+        </div>
       </div>
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
         <OverlayJsonSummary detail={detail} />
-        <OverlayElementSummary detail={detail} />
+        <OverlayElementSummary />
       </div>
     </section>
   );
@@ -180,15 +190,17 @@ function PreviewCard({ detail }) {
   return (
     <Card className="overflow-hidden p-0">
       {detail.thumbnailUrl ? (
-        <img
-          alt={`${detail.name} preview`}
-          className="aspect-[16/7] w-full object-cover"
-          src={detail.thumbnailUrl}
-        />
+        <div className="flex min-h-[420px] items-center justify-center bg-[var(--color-canvas-bg)] p-3">
+          <img
+            alt={`${detail.name} preview`}
+            className="max-h-[70vh] w-full object-contain"
+            src={detail.thumbnailUrl}
+          />
+        </div>
       ) : (
-        <div className="flex aspect-[16/7] w-full flex-col items-center justify-center bg-[var(--color-surface-soft)]">
+        <div className="flex min-h-[420px] w-full flex-col items-center justify-center bg-[var(--color-surface-soft)]">
           <strong className="text-lg font-semibold">MSP Overlay</strong>
-          <span className="mt-2 text-sm text-[var(--color-text-sub)]">No Preview</span>
+          <span className="mt-2 text-sm text-[var(--color-text-sub)]">No preview uploaded</span>
         </div>
       )}
     </Card>

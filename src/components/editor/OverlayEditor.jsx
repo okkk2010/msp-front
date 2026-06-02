@@ -33,6 +33,7 @@ export function OverlayEditor({
   onSelectElements,
   onToggleElementSelection,
   onUpload,
+  uploadActionLabel = "Upload",
   canPasteElement,
   selectedElement,
   selectedElementId,
@@ -119,6 +120,7 @@ export function OverlayEditor({
             onPreview={onOpenPreview}
             onReset={onReset}
             onUpload={onUpload}
+            uploadActionLabel={uploadActionLabel}
           />
         </div>
       </div>
