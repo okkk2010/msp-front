@@ -6,7 +6,7 @@ const apiBaseUrl = import.meta.env.DEV
   : (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080").trim();
 
 export const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? "http://115.68.226.131:8080",
+  baseURL: apiBaseUrl,
   withCredentials: true,
 });
 

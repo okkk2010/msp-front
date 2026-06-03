@@ -7,7 +7,6 @@ import { HomePage } from "../pages/HomePage";
 import { LibraryPage } from "../pages/LibraryPage";
 import { LoginCallbackPage } from "../pages/LoginCallbackPage";
 import { NotFoundPage } from "../pages/NotFoundPage";
-import { OverlayCloneEditPage } from "../pages/OverlayCloneEditPage";
 import { OverlayDetailPage } from "../pages/OverlayDetailPage";
 import { OverlayEditorPage } from "../pages/OverlayEditorPage";
 import { OverlayListPage } from "../pages/OverlayListPage";
@@ -39,10 +38,18 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: ROUTES.editorCustomize,
+        element: (
+          <ProtectedRoute>
+            <OverlayEditorPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: ROUTES.editorClone,
         element: (
           <ProtectedRoute>
-            <OverlayCloneEditPage />
+            <OverlayEditorPage />
           </ProtectedRoute>
         ),
       },

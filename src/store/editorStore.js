@@ -259,17 +259,19 @@ export function moveElementLayerTo(id, position) {
   });
 }
 
-export function loadFromOverlayJson(json) {
+export function loadFromOverlayJson(json, metaPatch = {}) {
   editorStore.setState((state) => ({
     ...state,
     overlayMeta: {
       ...state.overlayMeta,
+      overlayId: json.overlayId ?? "",
       name: json.name,
       description: json.description ?? "",
       code: extractCodeFromOverlayId(json.overlayId),
       platform: json.platform,
       gameId: json.game?.id ?? null,
       gameName: json.game?.name ?? "",
+      ...metaPatch,
     },
     canvas: json.canvas,
     overlaySettings: {

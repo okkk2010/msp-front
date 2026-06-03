@@ -19,3 +19,7 @@ export function fetchOverlayDetail(id) {
 export function createOverlay(formData) {
   return unwrapResponse(axiosInstance.post("/api/overlays", formData));
 }
+
+export function updateOverlay(id, formData) {
+  return unwrapResponse(axiosInstance.patch(`/api/overlays/${id}`, formData));
+}

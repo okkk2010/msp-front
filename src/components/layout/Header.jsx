@@ -32,15 +32,17 @@ export function Header() {
           <div className="hidden items-center gap-2 lg:flex">
             <DesktopNav />
           </div>
-          <div className="hidden items-center gap-3 md:flex">
-            <Input className="w-44" placeholder="Search overlays" />
-            <Button onClick={() => navigate(ROUTES.editor)}>Create Overlay</Button>
+          <div className="hidden min-w-0 items-center gap-3 md:flex">
+            <Input className="w-44 lg:w-64 xl:w-96" placeholder="Search overlays" />
+            <Button className="shrink-0 whitespace-nowrap" onClick={() => navigate(ROUTES.editor)}>
+              Create Overlay
+            </Button>
             {!isReady ? (
               <span className="text-sm text-[var(--color-text-sub)]">Checking session...</span>
             ) : isAuthenticated ? (
               <>
                 <UserProfileButton userName={user?.name ?? "User"} />
-                <Button onClick={signOut} variant="ghost">
+                <Button className="shrink-0 whitespace-nowrap" onClick={signOut} variant="ghost">
                   Logout
                 </Button>
               </>
