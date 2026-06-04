@@ -1,19 +1,19 @@
 import { createQueryParams, unwrapResponse } from "./apiClient";
-import { axiosInstance } from "./axiosInstance";
+import { axiosInstance, publicAxiosInstance } from "./axiosInstance";
 
 /**
  * @param {import("../store/overlayFilterStore").OverlayFilterState} filters
  */
 export function fetchOverlayList(filters) {
   return unwrapResponse(
-    axiosInstance.get("/api/overlays", {
+    publicAxiosInstance.get("/api/overlays", {
       params: createQueryParams(filters),
     }),
   );
 }
 
 export function fetchOverlayDetail(id) {
-  return unwrapResponse(axiosInstance.get(`/api/overlays/${id}`));
+  return unwrapResponse(publicAxiosInstance.get(`/api/overlays/${id}`));
 }
 
 export function createOverlay(formData) {

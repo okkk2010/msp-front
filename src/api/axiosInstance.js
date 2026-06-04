@@ -10,6 +10,11 @@ export const axiosInstance = axios.create({
   withCredentials: true,
 });
 
+export const publicAxiosInstance = axios.create({
+  baseURL: apiBaseUrl,
+  withCredentials: true,
+});
+
 axiosInstance.interceptors.request.use((config) => {
   const accessToken = getAccessToken();
 

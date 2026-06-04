@@ -1,6 +1,6 @@
 import { unwrapResponse } from "./apiClient";
-import { axiosInstance } from "./axiosInstance";
+import { publicAxiosInstance } from "./axiosInstance";
 
 export function fetchPlatforms() {
-  return unwrapResponse(axiosInstance.get("/api/platforms"));
+  return unwrapResponse(publicAxiosInstance.get("/api/platforms"));
 }

@@ -1,9 +1,9 @@
 import { unwrapResponse } from "./apiClient";
-import { axiosInstance } from "./axiosInstance";
+import { publicAxiosInstance } from "./axiosInstance";
 
 export function fetchGamesByPlatform(platform) {
   return unwrapResponse(
-    axiosInstance.get("/api/games", {
+    publicAxiosInstance.get("/api/games", {
       params: {
         platform,
       },
