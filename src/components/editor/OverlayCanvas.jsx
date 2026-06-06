@@ -396,6 +396,11 @@ export function OverlayCanvas({
                   ))
               : null}
             {selectedBounds ? <SelectionOutline bounds={selectedBounds} /> : null}
+            {currentMode === "select"
+              ? visibleElements
+                  .filter((element) => selectedIdSet.has(element.id) && hasVisualAnchor(element))
+                  .map((element) => <AnchorIndicator element={element} key={`anchor-${element.id}`} />)
+              : null}
             {currentMode === "select" && selectedElement && selectedElement.locked !== true ? (
               <ResizeHandles
                 element={selectedElement}
@@ -709,6 +714,52 @@ function SelectionOutline({ bounds }) {
   );
 }
 
+function AnchorIndicator({ element }) {
+  const anchor = element.anchor ?? "top-left";
+  const anchorSpace = element.anchorSpace ?? "safeFrame";
+  const point = getElementAnchorPoint(element, anchor);
+  const label = `${getAnchorLabel(anchor)} / ${anchorSpace === "screen" ? "전체 화면" : "설계 영역"}`;
+  const labelPosition = getAnchorLabelPosition(point, anchor);
+
+  return (
+    <g pointerEvents="none">
+      <line
+        stroke="#F97316"
+        strokeLinecap="round"
+        strokeWidth="3"
+        x1={point.x - 10}
+        x2={point.x + 10}
+        y1={point.y}
+        y2={point.y}
+      />
+      <line
+        stroke="#F97316"
+        strokeLinecap="round"
+        strokeWidth="3"
+        x1={point.x}
+        x2={point.x}
+        y1={point.y - 10}
+        y2={point.y + 10}
+      />
+      <circle cx={point.x} cy={point.y} fill="#FFF7ED" r="7" stroke="#EA580C" strokeWidth="3" />
+      <text
+        fill="#9A3412"
+        fontSize="18"
+        fontWeight="700"
+        paintOrder="stroke"
+        stroke="#FFF7ED"
+        strokeLinejoin="round"
+        strokeWidth="6"
+        textAnchor={labelPosition.textAnchor}
+        x={labelPosition.x}
+        y={labelPosition.y}
+      >
+        {label}
+      </text>
+    </g>
+  );
+}
+
 function MarqueeSelection({ bounds }) {
   return (
     <rect
@@ -750,6 +801,75 @@ function getResizeHandles(element) {
     { id: "sw", cursor: "cursor-nesw-resize", x: left, y: bottom },
     { id: "w", cursor: "cursor-ew-resize", x: left, y: centerY },
   ];
+}
+
+function hasVisualAnchor(element) {
+  return element.type === "rect" || element.type === "circle";
+}
+
+function getElementAnchorPoint(element, anchor) {
+  const left = element.x;
+  const top = element.y;
+  const centerX = element.x + element.width / 2;
+  const centerY = element.y + element.height / 2;
+  const right = element.x + element.width;
+  const bottom = element.y + element.height;
+
+  switch (anchor) {
+    case "top":
+      return { x: centerX, y: top };
+    case "top-right":
+      return { x: right, y: top };
+    case "left":
+      return { x: left, y: centerY };
+    case "center":
+      return { x: centerX, y: centerY };
+    case "right":
+      return { x: right, y: centerY };
+    case "bottom-left":
+      return { x: left, y: bottom };
+    case "bottom":
+      return { x: centerX, y: bottom };
+    case "bottom-right":
+      return { x: right, y: bottom };
+    case "top-left":
+    default:
+      return { x: left, y: top };
+  }
+}
+
+function getAnchorLabel(anchor) {
+  const labels = {
+    "top-left": "좌상단",
+    top: "상단",
+    "top-right": "우상단",
+    left: "좌측",
+    center: "중앙",
+    right: "우측",
+    "bottom-left": "좌하단",
+    bottom: "하단",
+    "bottom-right": "우하단",
+  };
+
+  return labels[anchor] ?? labels["top-left"];
+}
+
+function getAnchorLabelPosition(point, anchor) {
+  const y = anchor.includes("bottom") ? point.y - 18 : point.y + 30;
+
+  if (anchor.includes("right")) {
+    return { x: point.x - 16, y, textAnchor: "end" };
+  }
+
+  if (anchor.includes("left")) {
+    return { x: point.x + 16, y, textAnchor: "start" };
+  }
+
+  if (anchor.includes("bottom")) {
+    return { x: point.x, y, textAnchor: "middle" };
+  }
+
+  return { x: point.x, y, textAnchor: "middle" };
 }
 
 function getSvgPoint(svg, event, canvas) {

@@ -12,6 +12,65 @@ const FIELD_MAP = {
 const ANCHOR_OPTIONS = ["top-left", "top", "top-right", "left", "center", "right", "bottom-left", "bottom", "bottom-right"];
 const ANCHOR_SPACE_OPTIONS = ["safeFrame", "screen"];
 
+const FIELD_LABELS = {
+  x: "X 위치",
+  y: "Y 위치",
+  width: "가로",
+  height: "세로",
+  rotation: "회전",
+  opacity: "투명도",
+  zIndex: "레이어 순서",
+  strokeWidth: "테두리 두께",
+  cornerRadius: "모서리 반경",
+  x1: "시작 X",
+  y1: "시작 Y",
+  x2: "끝 X",
+  y2: "끝 Y",
+  anchor: "앵커",
+  anchorSpace: "앵커 기준",
+  fillColor: "채우기 색상",
+  strokeColor: "테두리 색상",
+  dashStyle: "선 스타일",
+};
+
+const FIELD_HELP = {
+  x: "오브젝트 왼쪽 기준 X 좌표입니다.",
+  y: "오브젝트 위쪽 기준 Y 좌표입니다.",
+  width: "오브젝트의 가로 크기입니다.",
+  height: "오브젝트의 세로 크기입니다.",
+  rotation: "오브젝트 회전값입니다. 현재 렌더러 지원 범위에 맞춰 저장됩니다.",
+  opacity: "0에서 1 사이의 투명도입니다.",
+  zIndex: "값이 클수록 더 위에 그려집니다.",
+  strokeWidth: "테두리 또는 선의 두께입니다.",
+  cornerRadius: "사각형 모서리를 둥글게 만드는 반경입니다.",
+  x1: "선이 시작되는 X 좌표입니다.",
+  y1: "선이 시작되는 Y 좌표입니다.",
+  x2: "선이 끝나는 X 좌표입니다.",
+  y2: "선이 끝나는 Y 좌표입니다.",
+  anchor: "해상도 차이가 날 때 이 오브젝트가 붙어 있을 기준점입니다.",
+  anchorSpace: "앵커를 설계 영역 기준으로 볼지, 실제 화면 전체 기준으로 볼지 정합니다.",
+  fillColor: "오브젝트 내부 색상입니다.",
+  strokeColor: "오브젝트 테두리 또는 선 색상입니다.",
+  dashStyle: "선의 실선, 파선, 점선 스타일입니다.",
+};
+
+const ANCHOR_LABELS = {
+  "top-left": "좌상단",
+  top: "상단",
+  "top-right": "우상단",
+  left: "좌측",
+  center: "중앙",
+  right: "우측",
+  "bottom-left": "좌하단",
+  bottom: "하단",
+  "bottom-right": "우하단",
+};
+
+const ANCHOR_SPACE_LABELS = {
+  safeFrame: "설계 영역",
+  screen: "전체 화면",
+};
+
 export function ElementPropertyPanel({ element, elements = [], onChange }) {
   if (elements.length > 1) {
     return <MultiElementPropertyPanel elements={elements} onChange={onChange} />;
@@ -41,7 +100,7 @@ export function ElementPropertyPanel({ element, elements = [], onChange }) {
       <div className="grid gap-3 md:grid-cols-2">
         {fields.map((field) => (
           <label key={field} className="space-y-2 text-sm">
-            <span className="text-[var(--color-text-sub)]">{field}</span>
+            <FieldLabel field={field} />
             <Input
               onChange={(event) => onChange(field, normalizeValue(event.target.value))}
               value={element[field] ?? ""}
@@ -51,21 +110,21 @@ export function ElementPropertyPanel({ element, elements = [], onChange }) {
         {element.type === "rect" || element.type === "circle" ? (
           <>
             <label className="space-y-2 text-sm">
-              <span className="text-[var(--color-text-sub)]">anchor</span>
+              <FieldLabel field="anchor" />
               <Select onChange={(event) => onChange("anchor", event.target.value)} value={element.anchor ?? "top-left"}>
                 {ANCHOR_OPTIONS.map((option) => (
                   <option key={option} value={option}>
-                    {option}
+                    {ANCHOR_LABELS[option]}
                   </option>
                 ))}
               </Select>
             </label>
             <label className="space-y-2 text-sm">
-              <span className="text-[var(--color-text-sub)]">anchorSpace</span>
+              <FieldLabel field="anchorSpace" />
               <Select onChange={(event) => onChange("anchorSpace", event.target.value)} value={element.anchorSpace ?? "safeFrame"}>
                 {ANCHOR_SPACE_OPTIONS.map((option) => (
                   <option key={option} value={option}>
-                    {option}
+                    {ANCHOR_SPACE_LABELS[option]}
                   </option>
                 ))}
               </Select>
@@ -74,7 +133,7 @@ export function ElementPropertyPanel({ element, elements = [], onChange }) {
         ) : null}
         {"fillColor" in element ? (
           <label className="space-y-2 text-sm">
-            <span className="text-[var(--color-text-sub)]">fillColor</span>
+            <FieldLabel field="fillColor" />
             <ColorPicker
               onChange={(event) => onChange("fillColor", event.target.value)}
               value={sanitizeColorValue(element.fillColor)}
@@ -83,7 +142,7 @@ export function ElementPropertyPanel({ element, elements = [], onChange }) {
         ) : null}
         {"strokeColor" in element ? (
           <label className="space-y-2 text-sm">
-            <span className="text-[var(--color-text-sub)]">strokeColor</span>
+            <FieldLabel field="strokeColor" />
             <ColorPicker
               onChange={(event) => onChange("strokeColor", event.target.value)}
               value={sanitizeColorValue(element.strokeColor)}
@@ -92,7 +151,7 @@ export function ElementPropertyPanel({ element, elements = [], onChange }) {
         ) : null}
         {"dashStyle" in element ? (
           <label className="space-y-2 text-sm">
-            <span className="text-[var(--color-text-sub)]">dashStyle</span>
+            <FieldLabel field="dashStyle" />
             <Select
               onChange={(event) => onChange("dashStyle", event.target.value)}
               value={element.dashStyle}
@@ -128,7 +187,7 @@ function MultiElementPropertyPanel({ elements, onChange }) {
       <div className="grid gap-3 md:grid-cols-2">
         {elements.some(hasFillColor) ? (
           <label className="space-y-2 text-sm">
-            <span className="text-[var(--color-text-sub)]">fillColor</span>
+            <FieldLabel field="fillColor" />
             <ColorPicker
               onChange={(event) => onChange("fillColor", event.target.value)}
               value={sanitizeColorValue(fillValue)}
@@ -137,7 +196,7 @@ function MultiElementPropertyPanel({ elements, onChange }) {
         ) : null}
         {elements.some(hasStrokeColor) ? (
           <label className="space-y-2 text-sm">
-            <span className="text-[var(--color-text-sub)]">strokeColor</span>
+            <FieldLabel field="strokeColor" />
             <ColorPicker
               onChange={(event) => onChange("strokeColor", event.target.value)}
               value={sanitizeColorValue(strokeColorValue)}
@@ -146,7 +205,7 @@ function MultiElementPropertyPanel({ elements, onChange }) {
         ) : null}
         {elements.some(hasStrokeWidth) ? (
           <label className="space-y-2 text-sm">
-            <span className="text-[var(--color-text-sub)]">strokeWidth</span>
+            <FieldLabel field="strokeWidth" />
             <Input
               onChange={(event) => onChange("strokeWidth", normalizeValue(event.target.value))}
               placeholder={strokeWidthValue === "" ? "mixed" : undefined}
@@ -156,7 +215,7 @@ function MultiElementPropertyPanel({ elements, onChange }) {
         ) : null}
         {elements.some(hasCornerRadius) ? (
           <label className="space-y-2 text-sm">
-            <span className="text-[var(--color-text-sub)]">cornerRadius</span>
+            <FieldLabel field="cornerRadius" />
             <Input
               onChange={(event) => onChange("cornerRadius", normalizeValue(event.target.value))}
               placeholder={cornerRadiusValue === "" ? "mixed" : undefined}
@@ -167,21 +226,21 @@ function MultiElementPropertyPanel({ elements, onChange }) {
         {anchorElements.length ? (
           <>
             <label className="space-y-2 text-sm">
-              <span className="text-[var(--color-text-sub)]">anchor</span>
+              <FieldLabel field="anchor" />
               <Select onChange={(event) => onChange("anchor", event.target.value)} value={anchorValue || "top-left"}>
                 {ANCHOR_OPTIONS.map((option) => (
                   <option key={option} value={option}>
-                    {option}
+                    {ANCHOR_LABELS[option]}
                   </option>
                 ))}
               </Select>
             </label>
             <label className="space-y-2 text-sm">
-              <span className="text-[var(--color-text-sub)]">anchorSpace</span>
+              <FieldLabel field="anchorSpace" />
               <Select onChange={(event) => onChange("anchorSpace", event.target.value)} value={anchorSpaceValue || "safeFrame"}>
                 {ANCHOR_SPACE_OPTIONS.map((option) => (
                   <option key={option} value={option}>
-                    {option}
+                    {ANCHOR_SPACE_LABELS[option]}
                   </option>
                 ))}
               </Select>
@@ -190,6 +249,17 @@ function MultiElementPropertyPanel({ elements, onChange }) {
         ) : null}
       </div>
     </Card>
+  );
+}
+
+function FieldLabel({ field }) {
+  return (
+    <span
+      className="inline-flex cursor-help items-center gap-1 text-[var(--color-text-sub)]"
+      title={FIELD_HELP[field] ?? FIELD_LABELS[field] ?? field}
+    >
+      {FIELD_LABELS[field] ?? field}
+    </span>
   );
 }
 
