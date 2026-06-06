@@ -9,6 +9,23 @@ const FIELD_MAP = {
   line: ["x1", "y1", "x2", "y2", "opacity", "zIndex", "strokeWidth"],
 };
 
+const MULTI_FIELD_ORDER = [
+  "x",
+  "y",
+  "width",
+  "height",
+  "rotation",
+  "opacity",
+  "zIndex",
+  "strokeWidth",
+  "cornerRadius",
+  "anchor",
+  "anchorSpace",
+  "fillColor",
+  "strokeColor",
+  "dashStyle",
+];
+
 const ANCHOR_OPTIONS = ["top-left", "top", "top-right", "left", "center", "right", "bottom-left", "bottom", "bottom-right"];
 const ANCHOR_SPACE_OPTIONS = ["safeFrame", "screen"];
 
@@ -38,8 +55,8 @@ const FIELD_HELP = {
   y: "오브젝트 위쪽 기준 Y 좌표입니다.",
   width: "오브젝트의 가로 크기입니다.",
   height: "오브젝트의 세로 크기입니다.",
-  rotation: "오브젝트 회전값입니다. 현재 렌더러 지원 범위에 맞춰 저장됩니다.",
-  opacity: "0에서 1 사이의 투명도입니다.",
+  rotation: "오브젝트 회전값입니다.",
+  opacity: "0에서 100 사이의 투명도입니다.",
   zIndex: "값이 클수록 더 위에 그려집니다.",
   strokeWidth: "테두리 또는 선의 두께입니다.",
   cornerRadius: "사각형 모서리를 둥글게 만드는 반경입니다.",
@@ -91,76 +108,30 @@ export function ElementPropertyPanel({ element, elements = [], onChange }) {
 
   return (
     <Card className="min-h-[360px] space-y-4 p-5">
-      <div>
-        <h2 className="text-base font-semibold">Property Panel</h2>
-        <p className="mt-1 text-sm text-[var(--color-text-sub)]">
-          {element.type} | {element.id}
-        </p>
-      </div>
+      <PanelHeader title="Property Panel" subtitle={`${element.type} | ${element.id}`} />
       <div className="grid gap-3 md:grid-cols-2">
         {fields.map((field) => (
-          <label key={field} className="space-y-2 text-sm">
-            <FieldLabel field={field} />
-            <Input
-              onChange={(event) => onChange(field, normalizeValue(event.target.value))}
-              value={element[field] ?? ""}
-            />
-          </label>
+          <FieldControl
+            field={field}
+            key={field}
+            onChange={onChange}
+            value={element[field] ?? ""}
+          />
         ))}
         {element.type === "rect" || element.type === "circle" ? (
           <>
-            <label className="space-y-2 text-sm">
-              <FieldLabel field="anchor" />
-              <Select onChange={(event) => onChange("anchor", event.target.value)} value={element.anchor ?? "top-left"}>
-                {ANCHOR_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {ANCHOR_LABELS[option]}
-                  </option>
-                ))}
-              </Select>
-            </label>
-            <label className="space-y-2 text-sm">
-              <FieldLabel field="anchorSpace" />
-              <Select onChange={(event) => onChange("anchorSpace", event.target.value)} value={element.anchorSpace ?? "safeFrame"}>
-                {ANCHOR_SPACE_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {ANCHOR_SPACE_LABELS[option]}
-                  </option>
-                ))}
-              </Select>
-            </label>
+            <FieldControl field="anchor" onChange={onChange} value={element.anchor ?? "top-left"} />
+            <FieldControl field="anchorSpace" onChange={onChange} value={element.anchorSpace ?? "safeFrame"} />
           </>
         ) : null}
         {"fillColor" in element ? (
-          <label className="space-y-2 text-sm">
-            <FieldLabel field="fillColor" />
-            <ColorPicker
-              onChange={(event) => onChange("fillColor", event.target.value)}
-              value={sanitizeColorValue(element.fillColor)}
-            />
-          </label>
+          <FieldControl field="fillColor" onChange={onChange} value={sanitizeColorValue(element.fillColor)} />
         ) : null}
         {"strokeColor" in element ? (
-          <label className="space-y-2 text-sm">
-            <FieldLabel field="strokeColor" />
-            <ColorPicker
-              onChange={(event) => onChange("strokeColor", event.target.value)}
-              value={sanitizeColorValue(element.strokeColor)}
-            />
-          </label>
+          <FieldControl field="strokeColor" onChange={onChange} value={sanitizeColorValue(element.strokeColor)} />
         ) : null}
         {"dashStyle" in element ? (
-          <label className="space-y-2 text-sm">
-            <FieldLabel field="dashStyle" />
-            <Select
-              onChange={(event) => onChange("dashStyle", event.target.value)}
-              value={element.dashStyle}
-            >
-              <option value="solid">solid</option>
-              <option value="dash">dash</option>
-              <option value="dot">dot</option>
-            </Select>
-          </label>
+          <FieldControl field="dashStyle" onChange={onChange} value={element.dashStyle} />
         ) : null}
       </div>
     </Card>
@@ -168,87 +139,105 @@ export function ElementPropertyPanel({ element, elements = [], onChange }) {
 }
 
 function MultiElementPropertyPanel({ elements, onChange }) {
-  const fillValue = getCommonValue(elements.filter(hasFillColor), "fillColor");
-  const strokeColorValue = getCommonValue(elements.filter(hasStrokeColor), "strokeColor");
-  const strokeWidthValue = getCommonValue(elements.filter(hasStrokeWidth), "strokeWidth");
-  const cornerRadiusValue = getCommonValue(elements.filter(hasCornerRadius), "cornerRadius");
-  const anchorElements = elements.filter(hasAnchor);
-  const anchorValue = getCommonValue(anchorElements, "anchor");
-  const anchorSpaceValue = getCommonValue(anchorElements, "anchorSpace");
+  const fields = MULTI_FIELD_ORDER.filter((field) => elements.some((element) => field in element));
 
   return (
     <Card className="min-h-[360px] space-y-4 p-5">
-      <div>
-        <h2 className="text-base font-semibold">Property Panel</h2>
-        <p className="mt-1 text-sm text-[var(--color-text-sub)]">
-          {elements.length} elements selected
-        </p>
-      </div>
+      <PanelHeader title="Property Panel" subtitle={`${elements.length}개 요소 선택됨`} />
       <div className="grid gap-3 md:grid-cols-2">
-        {elements.some(hasFillColor) ? (
-          <label className="space-y-2 text-sm">
-            <FieldLabel field="fillColor" />
-            <ColorPicker
-              onChange={(event) => onChange("fillColor", event.target.value)}
-              value={sanitizeColorValue(fillValue)}
+        {fields.map((field) => {
+          const fieldElements = elements.filter((element) => field in element);
+          const value = getCommonValue(fieldElements, field);
+
+          return (
+            <FieldControl
+              field={field}
+              key={field}
+              onChange={onChange}
+              placeholder={value === "" ? "mixed" : undefined}
+              value={getDisplayValue(field, value)}
             />
-          </label>
-        ) : null}
-        {elements.some(hasStrokeColor) ? (
-          <label className="space-y-2 text-sm">
-            <FieldLabel field="strokeColor" />
-            <ColorPicker
-              onChange={(event) => onChange("strokeColor", event.target.value)}
-              value={sanitizeColorValue(strokeColorValue)}
-            />
-          </label>
-        ) : null}
-        {elements.some(hasStrokeWidth) ? (
-          <label className="space-y-2 text-sm">
-            <FieldLabel field="strokeWidth" />
-            <Input
-              onChange={(event) => onChange("strokeWidth", normalizeValue(event.target.value))}
-              placeholder={strokeWidthValue === "" ? "mixed" : undefined}
-              value={strokeWidthValue}
-            />
-          </label>
-        ) : null}
-        {elements.some(hasCornerRadius) ? (
-          <label className="space-y-2 text-sm">
-            <FieldLabel field="cornerRadius" />
-            <Input
-              onChange={(event) => onChange("cornerRadius", normalizeValue(event.target.value))}
-              placeholder={cornerRadiusValue === "" ? "mixed" : undefined}
-              value={cornerRadiusValue}
-            />
-          </label>
-        ) : null}
-        {anchorElements.length ? (
-          <>
-            <label className="space-y-2 text-sm">
-              <FieldLabel field="anchor" />
-              <Select onChange={(event) => onChange("anchor", event.target.value)} value={anchorValue || "top-left"}>
-                {ANCHOR_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {ANCHOR_LABELS[option]}
-                  </option>
-                ))}
-              </Select>
-            </label>
-            <label className="space-y-2 text-sm">
-              <FieldLabel field="anchorSpace" />
-              <Select onChange={(event) => onChange("anchorSpace", event.target.value)} value={anchorSpaceValue || "safeFrame"}>
-                {ANCHOR_SPACE_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {ANCHOR_SPACE_LABELS[option]}
-                  </option>
-                ))}
-              </Select>
-            </label>
-          </>
-        ) : null}
+          );
+        })}
       </div>
     </Card>
+  );
+}
+
+function PanelHeader({ title, subtitle }) {
+  return (
+    <div>
+      <h2 className="text-base font-semibold">{title}</h2>
+      <p className="mt-1 text-sm text-[var(--color-text-sub)]">{subtitle}</p>
+    </div>
+  );
+}
+
+function FieldControl({ field, onChange, placeholder, value }) {
+  if (field === "anchor") {
+    return (
+      <label className="space-y-2 text-sm">
+        <FieldLabel field={field} />
+        <Select onChange={(event) => onChange(field, event.target.value)} value={value || "top-left"}>
+          {ANCHOR_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {ANCHOR_LABELS[option]}
+            </option>
+          ))}
+        </Select>
+      </label>
+    );
+  }
+
+  if (field === "anchorSpace") {
+    return (
+      <label className="space-y-2 text-sm">
+        <FieldLabel field={field} />
+        <Select onChange={(event) => onChange(field, event.target.value)} value={value || "safeFrame"}>
+          {ANCHOR_SPACE_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {ANCHOR_SPACE_LABELS[option]}
+            </option>
+          ))}
+        </Select>
+      </label>
+    );
+  }
+
+  if (field === "fillColor" || field === "strokeColor") {
+    return (
+      <label className="space-y-2 text-sm">
+        <FieldLabel field={field} />
+        <ColorPicker
+          onChange={(event) => onChange(field, event.target.value)}
+          value={sanitizeColorValue(value)}
+        />
+      </label>
+    );
+  }
+
+  if (field === "dashStyle") {
+    return (
+      <label className="space-y-2 text-sm">
+        <FieldLabel field={field} />
+        <Select onChange={(event) => onChange(field, event.target.value)} value={value || "solid"}>
+          <option value="solid">solid</option>
+          <option value="dash">dash</option>
+          <option value="dot">dot</option>
+        </Select>
+      </label>
+    );
+  }
+
+  return (
+    <label className="space-y-2 text-sm">
+      <FieldLabel field={field} />
+      <Input
+        onChange={(event) => onChange(field, normalizeValue(event.target.value))}
+        placeholder={placeholder}
+        value={value}
+      />
+    </label>
   );
 }
 
@@ -280,24 +269,12 @@ function getCommonValue(elements, field) {
   return hasSameValue ? firstValue : "";
 }
 
-function hasFillColor(element) {
-  return "fillColor" in element;
-}
+function getDisplayValue(field, value) {
+  if (field === "fillColor" || field === "strokeColor") {
+    return sanitizeColorValue(value);
+  }
 
-function hasStrokeColor(element) {
-  return "strokeColor" in element;
-}
-
-function hasStrokeWidth(element) {
-  return "strokeWidth" in element;
-}
-
-function hasCornerRadius(element) {
-  return "cornerRadius" in element;
-}
-
-function hasAnchor(element) {
-  return element.type === "rect" || element.type === "circle";
+  return value;
 }
 
 function sanitizeColorValue(value) {

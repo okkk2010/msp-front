@@ -1,5 +1,6 @@
 # Worklogs
 
+- [2026-06-06_editor-toolbar-and-multi-select-actions.md](./2026-06-06_editor-toolbar-and-multi-select-actions.md)
 - [2026-06-06_remove-scaffold-footer.md](./2026-06-06_remove-scaffold-footer.md)
 - [2026-06-06_move-anchor-label-to-canvas.md](./2026-06-06_move-anchor-label-to-canvas.md)
 - [2026-06-06_enhance-editor-anchor-visualization.md](./2026-06-06_enhance-editor-anchor-visualization.md)

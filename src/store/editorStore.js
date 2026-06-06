@@ -61,6 +61,21 @@ export function addElement(element) {
   );
 }
 
+export function addElements(elements) {
+  if (!elements.length) {
+    return;
+  }
+
+  editorStore.setState((state) =>
+    withDirtyState({
+      ...state,
+      elements: [...state.elements, ...elements],
+      selectedElementId: elements.length === 1 ? elements[0].id : null,
+      selectedElementIds: elements.map((element) => element.id),
+    }),
+  );
+}
+
 export function updateElement(id, patch) {
   editorStore.setState((state) =>
     withDirtyState({
@@ -83,6 +98,37 @@ export function moveElement(id, delta) {
       ...state,
       elements: state.elements.map((element) => {
         if (element.id !== id) {
+          return element;
+        }
+
+        if (element.type === "line") {
+          return {
+            ...element,
+            x1: element.x1 + delta.dx,
+            x2: element.x2 + delta.dx,
+            y1: element.y1 + delta.dy,
+            y2: element.y2 + delta.dy,
+          };
+        }
+
+        return {
+          ...element,
+          x: element.x + delta.dx,
+          y: element.y + delta.dy,
+        };
+      }),
+    }),
+  );
+}
+
+export function moveElements(ids, delta) {
+  const idSet = new Set(ids);
+
+  editorStore.setState((state) =>
+    withDirtyState({
+      ...state,
+      elements: state.elements.map((element) => {
+        if (!idSet.has(element.id)) {
           return element;
         }
 
@@ -178,6 +224,24 @@ export function updateElements(ids, patch) {
           ? {
               ...element,
               ...patch,
+            }
+          : element,
+      ),
+    }),
+  );
+}
+
+export function updateElementsById(patchById) {
+  const patchMap = patchById instanceof Map ? patchById : new Map(Object.entries(patchById));
+
+  editorStore.setState((state) =>
+    withDirtyState({
+      ...state,
+      elements: state.elements.map((element) =>
+        patchMap.has(element.id)
+          ? {
+              ...element,
+              ...patchMap.get(element.id),
             }
           : element,
       ),

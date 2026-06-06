@@ -11,8 +11,10 @@ import { ROUTES } from "../constants/routes";
 import { useToast } from "../hooks/useToast";
 import {
   addElement,
+  addElements,
   loadFromOverlayJson,
   moveElement,
+  moveElements,
   moveElementLayer,
   removeElements,
   removeElement,
@@ -24,6 +26,7 @@ import {
   toggleElementSelection,
   updateElement,
   updateElements,
+  updateElementsById,
   moveElementLayerTo,
   useEditorStore,
 } from "../store/editorStore";
@@ -58,7 +61,7 @@ export function OverlayEditorPage() {
     jsonText: "",
     summary: null,
   });
-  const [copiedElement, setCopiedElement] = useState(null);
+  const [copiedElements, setCopiedElements] = useState([]);
 
   const editorState = useEditorStore((state) => state);
   const canvas = editorState.canvas;
@@ -231,10 +234,33 @@ export function OverlayEditorPage() {
     removeElement(id);
   }
 
-  function handleCopyElement(id = selectedElementId) {
-    const target = elements.find((element) => element.id === id) ?? null;
+  function handleDragElement(id, delta) {
+    if (selectedElementIds.length > 1 && selectedElementIds.includes(id)) {
+      const movableIds = selectedElements
+        .filter((element) => !element.locked)
+        .map((element) => element.id);
 
-    if (!target) {
+      if (movableIds.length) {
+        moveElements(movableIds, delta);
+      }
+
+      return;
+    }
+
+    moveElement(id, delta);
+  }
+
+  function handleResizeElements(patchById) {
+    updateElementsById(patchById);
+  }
+
+  function handleCopyElement(id = selectedElementId) {
+    const targets =
+      selectedElementIds.length > 1 && (!id || selectedElementIds.includes(id))
+        ? selectedElements
+        : elements.filter((element) => element.id === id);
+
+    if (!targets.length) {
       showToast({
         message: "Select an element before copying.",
         type: "info",
@@ -242,11 +268,11 @@ export function OverlayEditorPage() {
       return;
     }
 
-    setCopiedElement(target);
+    setCopiedElements(targets.map((element) => ({ ...element })));
   }
 
   function handlePasteElement() {
-    if (!copiedElement) {
+    if (!copiedElements.length) {
       showToast({
         message: "Copy an element before pasting.",
         type: "info",
@@ -254,7 +280,9 @@ export function OverlayEditorPage() {
       return;
     }
 
-    addElement(cloneElement(copiedElement, getMaxZIndex(elements) + 1));
+    const maxZIndex = getMaxZIndex(elements);
+    const clones = copiedElements.map((element, index) => cloneElement(element, maxZIndex + index + 1));
+    addElements(clones);
   }
 
   function handleContextAction(action, id) {
@@ -269,10 +297,18 @@ export function OverlayEditorPage() {
       return;
     }
 
-    selectElement(id);
+    const actionIds = selectedElementIds.includes(id) ? selectedElementIds : [id];
+
+    if (!selectedElementIds.includes(id)) {
+      selectElement(id);
+    }
 
     if (action === "delete") {
-      handleDeleteElement(id);
+      if (actionIds.length > 1) {
+        handleDeleteElement(null);
+      } else {
+        handleDeleteElement(id);
+      }
       return;
     }
 
@@ -302,8 +338,11 @@ export function OverlayEditorPage() {
     }
 
     if (action === "duplicate") {
-      setCopiedElement(target);
-      addElement(cloneElement(target, getMaxZIndex(elements) + 1));
+      const duplicateTargets = actionIds.length > 1 ? selectedElements : [target];
+      const maxZIndex = getMaxZIndex(elements);
+      const clones = duplicateTargets.map((element, index) => cloneElement(element, maxZIndex + index + 1));
+      setCopiedElements(duplicateTargets.map((element) => ({ ...element })));
+      addElements(clones);
     }
   }
 
@@ -577,10 +616,10 @@ export function OverlayEditorPage() {
             open: false,
           }))
         }
-        canPasteElement={Boolean(copiedElement)}
+        canPasteElement={copiedElements.length > 0}
         onCopySelected={handleCopyElement}
         onDelete={() => handleDeleteElement()}
-        onDragElement={moveElement}
+        onDragElement={handleDragElement}
         onDrawCircle={handleDrawCircle}
         onDrawRect={handleDrawRect}
         onElementContextAction={handleContextAction}
@@ -599,6 +638,7 @@ export function OverlayEditorPage() {
           resetEditor();
         }}
         onResizeElement={updateElement}
+        onResizeElements={handleResizeElements}
         onSelectMode={setEditorMode}
         onSelectElements={selectElements}
         onToggleElementSelection={toggleElementSelection}

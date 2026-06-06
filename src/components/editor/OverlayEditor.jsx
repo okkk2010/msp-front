@@ -29,6 +29,7 @@ export function OverlayEditor({
   onPasteElement,
   onReset,
   onResizeElement,
+  onResizeElements,
   onSelectMode,
   onSelectElements,
   onToggleElementSelection,
@@ -48,6 +49,12 @@ export function OverlayEditor({
 
       const key = event.key.toLowerCase();
       const usesCommandKey = event.ctrlKey || event.metaKey;
+
+      if (usesCommandKey && key === "a") {
+        event.preventDefault();
+        onSelectElements(elements.map((element) => element.id));
+        return;
+      }
 
       if (usesCommandKey && key === "c") {
         event.preventDefault();
@@ -72,7 +79,7 @@ export function OverlayEditor({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [onCopySelected, onDelete, onPasteElement]);
+  }, [elements, onCopySelected, onDelete, onPasteElement, onSelectElements]);
 
   return (
     <section className="flex h-[calc(100vh-7rem)] flex-col gap-3 overflow-hidden">
@@ -97,6 +104,7 @@ export function OverlayEditor({
           onDrawRect={onDrawRect}
           onElementContextAction={onElementContextAction}
           onResizeElement={onResizeElement}
+          onResizeElements={onResizeElements}
           onSelectElement={onCanvasSelect}
           onSelectElements={onSelectElements}
           onToggleElementSelection={onToggleElementSelection}

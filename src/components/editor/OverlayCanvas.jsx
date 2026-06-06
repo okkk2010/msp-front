@@ -14,6 +14,7 @@ export function OverlayCanvas({
   onDrawRect,
   onElementContextAction,
   onResizeElement,
+  onResizeElements,
   onSelectElement,
   onSelectElements,
   onToggleElementSelection,
@@ -46,6 +47,18 @@ export function OverlayCanvas({
       ? sortedElements.find((element) => element.id === selectedElementId) ?? null
       : null;
   const selectedIdSet = useMemo(() => new Set(selectedElementIds), [selectedElementIds]);
+  const selectedVisibleElements = useMemo(
+    () => visibleElements.filter((element) => selectedIdSet.has(element.id)),
+    [selectedIdSet, visibleElements],
+  );
+  const selectedResizableElements = useMemo(
+    () => selectedVisibleElements.filter((element) => element.type !== "line" && element.locked !== true),
+    [selectedVisibleElements],
+  );
+  const selectedGroupBounds =
+    selectedElementIds.length > 1 && selectedResizableElements.length > 1
+      ? getElementsRawBounds(selectedResizableElements)
+      : null;
   const selectedBounds =
     selectedElement && selectedElement.visible !== false ? getElementBounds(selectedElement) : null;
 
@@ -87,6 +100,14 @@ export function OverlayCanvas({
       if (resizeRef.current) {
         const nextPoint = getSvgPoint(svgRef.current, event, canvas);
         if (!nextPoint) {
+          return;
+        }
+
+        if (resizeRef.current.type === "group") {
+          const nextBounds = getResizePatch(resizeRef.current.bounds, resizeRef.current.handle, nextPoint, {
+            fromCenter: event.altKey,
+          });
+          onResizeElements(getGroupResizePatches(resizeRef.current.elements, resizeRef.current.bounds, nextBounds));
           return;
         }
 
@@ -198,6 +219,7 @@ export function OverlayCanvas({
     onSelectElement,
     onSelectElements,
     onResizeElement,
+    onResizeElements,
     selectedElementIds,
     visibleElements,
   ]);
@@ -352,7 +374,11 @@ export function OverlayCanvas({
                     return;
                   }
 
-                  onSelectElement(element.id);
+                  const isMultiSelectedElement = selectedElementIds.length > 1 && selectedIdSet.has(element.id);
+
+                  if (!isMultiSelectedElement) {
+                    onSelectElement(element.id);
+                  }
 
                   if (element.locked) {
                     return;
@@ -365,7 +391,7 @@ export function OverlayCanvas({
 
                   dragRef.current = {
                     elementId: element.id,
-                    startBounds: getElementRawBounds(element),
+                    startBounds: isMultiSelectedElement && selectedGroupBounds ? selectedGroupBounds : getElementRawBounds(element),
                     startPoint: point,
                     appliedDelta: { dx: 0, dy: 0 },
                   };
@@ -374,7 +400,9 @@ export function OverlayCanvas({
                 onContextMenu={(event) => {
                   event.preventDefault();
                   event.stopPropagation();
-                  onSelectElement(element.id);
+                  if (!(selectedElementIds.length > 1 && selectedIdSet.has(element.id))) {
+                    onSelectElement(element.id);
+                  }
                   setContextMenu({
                     elementId: element.id,
                     x: event.clientX,
@@ -395,6 +423,7 @@ export function OverlayCanvas({
                     <SelectionOutline bounds={getElementBounds(element)} key={`selection-${element.id}`} />
                   ))
               : null}
+            {selectedGroupBounds ? <SelectionOutline bounds={inflateBounds(selectedGroupBounds, 8)} /> : null}
             {selectedBounds ? <SelectionOutline bounds={selectedBounds} /> : null}
             {currentMode === "select"
               ? visibleElements
@@ -414,6 +443,25 @@ export function OverlayCanvas({
                   resizeRef.current = {
                     elementId: selectedElement.id,
                     element: selectedElement,
+                    handle,
+                  };
+                  setIsResizing(true);
+                }}
+              />
+            ) : null}
+            {currentMode === "select" && selectedGroupBounds ? (
+              <ResizeHandles
+                element={{ type: "rect", ...selectedGroupBounds }}
+                onPointerDown={(event, handle) => {
+                  if (event.button !== 0) {
+                    return;
+                  }
+
+                  event.stopPropagation();
+                  resizeRef.current = {
+                    type: "group",
+                    bounds: selectedGroupBounds,
+                    elements: selectedResizableElements,
                     handle,
                   };
                   setIsResizing(true);
@@ -1176,6 +1224,50 @@ function getElementRawBounds(element) {
     width: element.width,
     height: element.height,
   };
+}
+
+function getElementsRawBounds(elements) {
+  const bounds = elements.map(getElementRawBounds);
+  const left = Math.min(...bounds.map((bound) => bound.x));
+  const top = Math.min(...bounds.map((bound) => bound.y));
+  const right = Math.max(...bounds.map((bound) => bound.x + bound.width));
+  const bottom = Math.max(...bounds.map((bound) => bound.y + bound.height));
+
+  return {
+    x: left,
+    y: top,
+    width: right - left,
+    height: bottom - top,
+  };
+}
+
+function inflateBounds(bounds, amount) {
+  return {
+    x: bounds.x - amount,
+    y: bounds.y - amount,
+    width: bounds.width + amount * 2,
+    height: bounds.height + amount * 2,
+  };
+}
+
+function getGroupResizePatches(elements, startBounds, nextBounds) {
+  const scaleX = startBounds.width ? nextBounds.width / startBounds.width : 1;
+  const scaleY = startBounds.height ? nextBounds.height / startBounds.height : 1;
+  const patches = new Map();
+
+  elements.forEach((element) => {
+    const relativeX = element.x - startBounds.x;
+    const relativeY = element.y - startBounds.y;
+
+    patches.set(element.id, {
+      x: Math.round(nextBounds.x + relativeX * scaleX),
+      y: Math.round(nextBounds.y + relativeY * scaleY),
+      width: Math.max(1, Math.round(element.width * scaleX)),
+      height: Math.max(1, Math.round(element.height * scaleY)),
+    });
+  });
+
+  return patches;
 }
 
 function doesRectIntersect(left, right) {
