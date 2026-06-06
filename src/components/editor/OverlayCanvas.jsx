@@ -399,7 +399,7 @@ export function OverlayCanvas({
             {currentMode === "select"
               ? visibleElements
                   .filter((element) => selectedIdSet.has(element.id) && hasVisualAnchor(element))
-                  .map((element) => <AnchorIndicator element={element} key={`anchor-${element.id}`} />)
+                  .map((element) => <VisualAnchorIndicator canvas={canvas} element={element} key={`anchor-${element.id}`} />)
               : null}
             {currentMode === "select" && selectedElement && selectedElement.locked !== true ? (
               <ResizeHandles
@@ -714,6 +714,8 @@ function SelectionOutline({ bounds }) {
   );
 }
 
+// TODO: Remove after the anchor visualization rollout is confirmed in editor QA.
+// eslint-disable-next-line no-unused-vars
 function AnchorIndicator({ element }) {
   const anchor = element.anchor ?? "top-left";
   const anchorSpace = element.anchorSpace ?? "safeFrame";
@@ -757,6 +759,129 @@ function AnchorIndicator({ element }) {
         {label}
       </text>
     </g>
+  );
+}
+
+function VisualAnchorIndicator({ canvas, element }) {
+  const anchor = element.anchor ?? "top-left";
+  const anchorSpace = element.anchorSpace ?? "safeFrame";
+  const elementPoint = getElementAnchorPoint(element, anchor);
+  const referencePoint = getCanvasAnchorPoint(canvas, anchor);
+  const guide = getAnchorReferenceGuide(canvas, anchor);
+  const label = `${getVisualAnchorLabel(anchor)} / ${anchorSpace === "screen" ? "전체 화면" : "설계 영역"}`;
+  const labelPosition = getAnchorLabelPosition(elementPoint, anchor);
+
+  return (
+    <g pointerEvents="none">
+      <rect
+        fill="rgba(249, 115, 22, 0.035)"
+        height={canvas.baseHeight}
+        stroke="#FB923C"
+        strokeDasharray="18 10"
+        strokeWidth="3"
+        width={canvas.baseWidth}
+        x="0"
+        y="0"
+      />
+      <VisualAnchorGuide canvas={canvas} guide={guide} />
+      <line
+        stroke="#EA580C"
+        strokeDasharray="10 8"
+        strokeWidth="3"
+        x1={referencePoint.x}
+        x2={elementPoint.x}
+        y1={referencePoint.y}
+        y2={elementPoint.y}
+      />
+      <path d={getAnchorPinPath(referencePoint, anchor)} fill="#EA580C" stroke="#FFF7ED" strokeWidth="3" />
+      <circle cx={referencePoint.x} cy={referencePoint.y} fill="#EA580C" r="6" stroke="#FFF7ED" strokeWidth="3" />
+      <line
+        stroke="#F97316"
+        strokeLinecap="round"
+        strokeWidth="3"
+        x1={elementPoint.x - 10}
+        x2={elementPoint.x + 10}
+        y1={elementPoint.y}
+        y2={elementPoint.y}
+      />
+      <line
+        stroke="#F97316"
+        strokeLinecap="round"
+        strokeWidth="3"
+        x1={elementPoint.x}
+        x2={elementPoint.x}
+        y1={elementPoint.y - 10}
+        y2={elementPoint.y + 10}
+      />
+      <circle cx={elementPoint.x} cy={elementPoint.y} fill="#FFF7ED" r="7" stroke="#EA580C" strokeWidth="3" />
+      <text
+        fill="#9A3412"
+        fontSize="18"
+        fontWeight="700"
+        paintOrder="stroke"
+        stroke="#FFF7ED"
+        strokeLinejoin="round"
+        strokeWidth="6"
+        textAnchor={labelPosition.textAnchor}
+        x={labelPosition.x}
+        y={labelPosition.y}
+      >
+        {label}
+      </text>
+    </g>
+  );
+}
+
+function VisualAnchorGuide({ canvas, guide }) {
+  if (guide.type === "vertical") {
+    return (
+      <line
+        stroke="#FB923C"
+        strokeDasharray="14 10"
+        strokeWidth="3"
+        x1={guide.x}
+        x2={guide.x}
+        y1="0"
+        y2={canvas.baseHeight}
+      />
+    );
+  }
+
+  if (guide.type === "horizontal") {
+    return (
+      <line
+        stroke="#FB923C"
+        strokeDasharray="14 10"
+        strokeWidth="3"
+        x1="0"
+        x2={canvas.baseWidth}
+        y1={guide.y}
+        y2={guide.y}
+      />
+    );
+  }
+
+  return (
+    <>
+      <line
+        stroke="#FB923C"
+        strokeDasharray="14 10"
+        strokeWidth="3"
+        x1={guide.x}
+        x2={guide.x}
+        y1="0"
+        y2={canvas.baseHeight}
+      />
+      <line
+        stroke="#FB923C"
+        strokeDasharray="14 10"
+        strokeWidth="3"
+        x1="0"
+        x2={canvas.baseWidth}
+        y1={guide.y}
+        y2={guide.y}
+      />
+    </>
   );
 }
 
@@ -836,6 +961,93 @@ function getElementAnchorPoint(element, anchor) {
     default:
       return { x: left, y: top };
   }
+}
+
+function getCanvasAnchorPoint(canvas, anchor) {
+  const left = 0;
+  const top = 0;
+  const centerX = canvas.baseWidth / 2;
+  const centerY = canvas.baseHeight / 2;
+  const right = canvas.baseWidth;
+  const bottom = canvas.baseHeight;
+
+  switch (anchor) {
+    case "top":
+      return { x: centerX, y: top };
+    case "top-right":
+      return { x: right, y: top };
+    case "left":
+      return { x: left, y: centerY };
+    case "center":
+      return { x: centerX, y: centerY };
+    case "right":
+      return { x: right, y: centerY };
+    case "bottom-left":
+      return { x: left, y: bottom };
+    case "bottom":
+      return { x: centerX, y: bottom };
+    case "bottom-right":
+      return { x: right, y: bottom };
+    case "top-left":
+    default:
+      return { x: left, y: top };
+  }
+}
+
+function getAnchorReferenceGuide(canvas, anchor) {
+  if (anchor === "center") {
+    return { type: "cross", x: canvas.baseWidth / 2, y: canvas.baseHeight / 2 };
+  }
+
+  if (anchor === "top" || anchor === "bottom") {
+    return { type: "horizontal", y: anchor === "top" ? 0 : canvas.baseHeight };
+  }
+
+  if (anchor === "left" || anchor === "right") {
+    return { type: "vertical", x: anchor === "left" ? 0 : canvas.baseWidth };
+  }
+
+  return {
+    type: "cross",
+    x: anchor.includes("right") ? canvas.baseWidth : 0,
+    y: anchor.includes("bottom") ? canvas.baseHeight : 0,
+  };
+}
+
+function getAnchorPinPath(point, anchor) {
+  const size = 18;
+  const horizontal = anchor.includes("right") ? -1 : 1;
+  const vertical = anchor.includes("bottom") ? -1 : 1;
+
+  if (anchor === "top" || anchor === "bottom") {
+    return `M ${point.x} ${point.y} l ${size / 2} ${size * vertical} h ${-size} Z`;
+  }
+
+  if (anchor === "left" || anchor === "right") {
+    return `M ${point.x} ${point.y} l ${size * horizontal} ${size / 2} v ${-size} Z`;
+  }
+
+  if (anchor === "center") {
+    return `M ${point.x} ${point.y - size / 2} l ${size / 2} ${size / 2} l ${-size / 2} ${size / 2} l ${-size / 2} ${-size / 2} Z`;
+  }
+
+  return `M ${point.x} ${point.y} l ${size * horizontal} 0 l 0 ${size * vertical} Z`;
+}
+
+function getVisualAnchorLabel(anchor) {
+  const labels = {
+    "top-left": "좌상단",
+    top: "상단",
+    "top-right": "우상단",
+    left: "좌측",
+    center: "중앙",
+    right: "우측",
+    "bottom-left": "좌하단",
+    bottom: "하단",
+    "bottom-right": "우하단",
+  };
+
+  return labels[anchor] ?? labels["top-left"];
 }
 
 function getAnchorLabel(anchor) {

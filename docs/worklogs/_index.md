@@ -1,5 +1,6 @@
 # Worklogs
 
+- [2026-06-06_enhance-editor-anchor-visualization.md](./2026-06-06_enhance-editor-anchor-visualization.md)
 - [2026-06-06_add-editor-anchor-visual-help.md](./2026-06-06_add-editor-anchor-visual-help.md)
 - [2026-06-06_add-overlay-anchor-controls.md](./2026-06-06_add-overlay-anchor-controls.md)
 - [2026-06-04_use-public-axios-for-discover.md](./2026-06-04_use-public-axios-for-discover.md)
