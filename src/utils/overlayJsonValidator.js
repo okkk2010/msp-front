@@ -1,6 +1,8 @@
 import { OVERLAY_SCHEMA_VERSION } from "../constants/overlaySchema";
 
 const ALLOWED_ELEMENT_TYPES = ["rect", "circle", "line"];
+const ALLOWED_ANCHORS = ["top-left", "top", "top-right", "left", "center", "right", "bottom-left", "bottom", "bottom-right"];
+const ALLOWED_ANCHOR_SPACES = ["safeFrame", "screen"];
 
 export function validateOverlayJson(json) {
   const errors = [];
@@ -102,6 +104,14 @@ function validateElement(element, index, errors) {
 
   if (!Number.isFinite(Number(element.zIndex))) {
     errors.push(`elements[${index}].zIndex must be a number.`);
+  }
+
+  if ((element.type === "rect" || element.type === "circle") && element.anchor && !ALLOWED_ANCHORS.includes(element.anchor)) {
+    errors.push(`elements[${index}].anchor must be one of ${ALLOWED_ANCHORS.join(", ")}.`);
+  }
+
+  if ((element.type === "rect" || element.type === "circle") && element.anchorSpace && !ALLOWED_ANCHOR_SPACES.includes(element.anchorSpace)) {
+    errors.push(`elements[${index}].anchorSpace must be one of ${ALLOWED_ANCHOR_SPACES.join(", ")}.`);
   }
 }
 

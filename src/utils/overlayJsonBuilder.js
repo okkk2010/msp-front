@@ -65,11 +65,32 @@ function normalizeElement(element) {
     y: Number(element.y),
     width: Number(element.width),
     height: Number(element.height),
+    anchor: normalizeAnchor(element.anchor),
+    anchorSpace: normalizeAnchorSpace(element.anchorSpace),
     rotation: Number(element.rotation ?? 0),
     strokeWidth: Number(element.strokeWidth),
     zIndex: Number(element.zIndex),
     ...(element.type === "rect" ? { cornerRadius: Number(element.cornerRadius ?? 0) } : {}),
   };
+}
+
+function normalizeAnchor(value) {
+  const allowed = new Set([
+    "top-left",
+    "top",
+    "top-right",
+    "left",
+    "center",
+    "right",
+    "bottom-left",
+    "bottom",
+    "bottom-right",
+  ]);
+  return allowed.has(value) ? value : "top-left";
+}
+
+function normalizeAnchorSpace(value) {
+  return value === "screen" ? "screen" : "safeFrame";
 }
 
 function normalizeOpacity(value) {

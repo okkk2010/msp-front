@@ -9,6 +9,9 @@ const FIELD_MAP = {
   line: ["x1", "y1", "x2", "y2", "opacity", "zIndex", "strokeWidth"],
 };
 
+const ANCHOR_OPTIONS = ["top-left", "top", "top-right", "left", "center", "right", "bottom-left", "bottom", "bottom-right"];
+const ANCHOR_SPACE_OPTIONS = ["safeFrame", "screen"];
+
 export function ElementPropertyPanel({ element, elements = [], onChange }) {
   if (elements.length > 1) {
     return <MultiElementPropertyPanel elements={elements} onChange={onChange} />;
@@ -45,6 +48,30 @@ export function ElementPropertyPanel({ element, elements = [], onChange }) {
             />
           </label>
         ))}
+        {element.type === "rect" || element.type === "circle" ? (
+          <>
+            <label className="space-y-2 text-sm">
+              <span className="text-[var(--color-text-sub)]">anchor</span>
+              <Select onChange={(event) => onChange("anchor", event.target.value)} value={element.anchor ?? "top-left"}>
+                {ANCHOR_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </Select>
+            </label>
+            <label className="space-y-2 text-sm">
+              <span className="text-[var(--color-text-sub)]">anchorSpace</span>
+              <Select onChange={(event) => onChange("anchorSpace", event.target.value)} value={element.anchorSpace ?? "safeFrame"}>
+                {ANCHOR_SPACE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </Select>
+            </label>
+          </>
+        ) : null}
         {"fillColor" in element ? (
           <label className="space-y-2 text-sm">
             <span className="text-[var(--color-text-sub)]">fillColor</span>
@@ -86,6 +113,9 @@ function MultiElementPropertyPanel({ elements, onChange }) {
   const strokeColorValue = getCommonValue(elements.filter(hasStrokeColor), "strokeColor");
   const strokeWidthValue = getCommonValue(elements.filter(hasStrokeWidth), "strokeWidth");
   const cornerRadiusValue = getCommonValue(elements.filter(hasCornerRadius), "cornerRadius");
+  const anchorElements = elements.filter(hasAnchor);
+  const anchorValue = getCommonValue(anchorElements, "anchor");
+  const anchorSpaceValue = getCommonValue(anchorElements, "anchorSpace");
 
   return (
     <Card className="min-h-[360px] space-y-4 p-5">
@@ -134,6 +164,30 @@ function MultiElementPropertyPanel({ elements, onChange }) {
             />
           </label>
         ) : null}
+        {anchorElements.length ? (
+          <>
+            <label className="space-y-2 text-sm">
+              <span className="text-[var(--color-text-sub)]">anchor</span>
+              <Select onChange={(event) => onChange("anchor", event.target.value)} value={anchorValue || "top-left"}>
+                {ANCHOR_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </Select>
+            </label>
+            <label className="space-y-2 text-sm">
+              <span className="text-[var(--color-text-sub)]">anchorSpace</span>
+              <Select onChange={(event) => onChange("anchorSpace", event.target.value)} value={anchorSpaceValue || "safeFrame"}>
+                {ANCHOR_SPACE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </Select>
+            </label>
+          </>
+        ) : null}
       </div>
     </Card>
   );
@@ -170,6 +224,10 @@ function hasStrokeWidth(element) {
 
 function hasCornerRadius(element) {
   return "cornerRadius" in element;
+}
+
+function hasAnchor(element) {
+  return element.type === "rect" || element.type === "circle";
 }
 
 function sanitizeColorValue(value) {

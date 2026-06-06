@@ -1,5 +1,6 @@
 # Worklogs
 
+- [2026-06-06_add-overlay-anchor-controls.md](./2026-06-06_add-overlay-anchor-controls.md)
 - [2026-06-04_use-public-axios-for-discover.md](./2026-06-04_use-public-axios-for-discover.md)
 - [2026-06-01_require-category-before-upload.md](./2026-06-01_require-category-before-upload.md)
 - [2026-05-28_fix-dev-api-cors-proxy.md](./2026-05-28_fix-dev-api-cors-proxy.md)
