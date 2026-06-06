@@ -769,7 +769,7 @@ function VisualAnchorIndicator({ canvas, element }) {
   const referencePoint = getCanvasAnchorPoint(canvas, anchor);
   const guide = getAnchorReferenceGuide(canvas, anchor);
   const label = `${getVisualAnchorLabel(anchor)} / ${anchorSpace === "screen" ? "전체 화면" : "설계 영역"}`;
-  const labelPosition = getAnchorLabelPosition(elementPoint, anchor);
+  const labelPosition = getCanvasAnchorLabelPosition(canvas, referencePoint, anchor);
 
   return (
     <g pointerEvents="none">
@@ -1082,6 +1082,48 @@ function getAnchorLabelPosition(point, anchor) {
   }
 
   return { x: point.x, y, textAnchor: "middle" };
+}
+
+function getCanvasAnchorLabelPosition(canvas, point, anchor) {
+  const inset = 28;
+
+  if (anchor === "center") {
+    return { x: point.x, y: point.y + 34, textAnchor: "middle" };
+  }
+
+  if (anchor.includes("left")) {
+    return {
+      x: Math.min(canvas.baseWidth - inset, point.x + inset),
+      y: getCanvasAnchorLabelY(canvas, point, anchor, inset),
+      textAnchor: "start",
+    };
+  }
+
+  if (anchor.includes("right")) {
+    return {
+      x: Math.max(inset, point.x - inset),
+      y: getCanvasAnchorLabelY(canvas, point, anchor, inset),
+      textAnchor: "end",
+    };
+  }
+
+  return {
+    x: point.x,
+    y: getCanvasAnchorLabelY(canvas, point, anchor, inset),
+    textAnchor: "middle",
+  };
+}
+
+function getCanvasAnchorLabelY(canvas, point, anchor, inset) {
+  if (anchor.includes("bottom")) {
+    return Math.max(inset, point.y - inset);
+  }
+
+  if (anchor.includes("top")) {
+    return Math.min(canvas.baseHeight - inset, point.y + inset + 8);
+  }
+
+  return point.y - inset;
 }
 
 function getSvgPoint(svg, event, canvas) {
