@@ -34,7 +34,7 @@ export function OverlayEditor({
   onSelectElements,
   onToggleElementSelection,
   onUpload,
-  uploadActionLabel = "Upload",
+  uploadActionLabel = "업로드",
   canPasteElement,
   selectedElement,
   selectedElementId,
@@ -84,7 +84,7 @@ export function OverlayEditor({
   return (
     <section className="flex h-[calc(100vh-7rem)] flex-col gap-3 overflow-hidden">
       <div className="rounded-3xl border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/10 px-4 py-3 text-sm text-[var(--color-warning)] md:hidden">
-        Mobile editor controls are limited. Use a desktop viewport for full editing.
+        모바일에서는 에디터 조작이 제한됩니다. 전체 편집 기능은 데스크톱 화면에서 사용해 주세요.
       </div>
       <div className="grid min-h-0 flex-1 items-stretch gap-3 xl:grid-cols-[220px_minmax(0,1fr)_360px]">
         <EditorToolbar

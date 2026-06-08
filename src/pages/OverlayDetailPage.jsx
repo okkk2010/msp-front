@@ -68,7 +68,7 @@ export function OverlayDetailPage() {
 
     if (!isAuthenticated) {
       showToast({
-        message: "Log in to save overlays to your library.",
+        message: "라이브러리에 저장하려면 로그인해 주세요.",
         type: "info",
       });
       return;
@@ -79,7 +79,7 @@ export function OverlayDetailPage() {
       await saveOverlayToLibrary(detail.id);
       markOverlaySaved(detail.id);
       showToast({
-        message: "Saved to your library.",
+        message: "라이브러리에 저장했습니다.",
         type: "success",
       });
     } catch (requestError) {
@@ -99,7 +99,7 @@ export function OverlayDetailPage() {
 
     if (!isAuthenticated) {
       showToast({
-        message: "Log in to use this overlay as a template.",
+        message: "이 오버레이를 템플릿으로 사용하려면 로그인해 주세요.",
         type: "info",
       });
       return;
@@ -111,7 +111,7 @@ export function OverlayDetailPage() {
   function handleDownloadJson() {
     if (!detail?.jsonUrl) {
       showToast({
-        message: "No downloadable JSON is available for this overlay.",
+        message: "이 오버레이에는 다운로드 가능한 JSON이 없습니다.",
         type: "info",
       });
       return;
@@ -123,7 +123,7 @@ export function OverlayDetailPage() {
   if (isLoading) {
     return (
       <section className="space-y-4">
-        <LoadingSpinner label="Loading overlay details..." />
+        <LoadingSpinner label="오버레이 상세 정보를 불러오는 중..." />
       </section>
     );
   }
@@ -133,7 +133,7 @@ export function OverlayDetailPage() {
       <section className="space-y-4">
         <ErrorMessage>{error}</ErrorMessage>
         <Button onClick={() => navigate("/overlays")} variant="secondary">
-          Back to Discover
+          탐색으로 돌아가기
         </Button>
       </section>
     );
@@ -142,8 +142,8 @@ export function OverlayDetailPage() {
   if (!detail) {
     return (
       <EmptyState
-        description="The requested overlay could not be found."
-        title="Overlay detail is unavailable."
+        description="요청한 오버레이를 찾을 수 없습니다."
+        title="오버레이 상세 정보를 사용할 수 없습니다."
       />
     );
   }
@@ -167,22 +167,22 @@ export function OverlayDetailPage() {
           <div className="grid gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm sm:grid-cols-2 2xl:grid-cols-1">
             {canEdit ? (
               <Button onClick={() => navigate(`/editor/${detail.overlayId}`)} variant="secondary">
-                Edit Overlay
+                오버레이 편집
               </Button>
             ) : null}
             <Button disabled={isSaving} onClick={handleSaveToLibrary}>
-              {isSaving ? "Saving..." : "Save to Library"}
+              {isSaving ? "저장 중..." : "라이브러리에 저장"}
             </Button>
             {!canEdit ? (
               <Button onClick={handleUseAsTemplate} variant="secondary">
-                Customize Overlay
+                오버레이 커스터마이즈
               </Button>
             ) : null}
             <Button onClick={handleDownloadJson} variant="secondary">
-              Download JSON
+              JSON 다운로드
             </Button>
             <Button onClick={() => navigate("/overlays")} variant="ghost">
-              Back to Discover
+              탐색으로 돌아가기
             </Button>
           </div>
         </div>
@@ -197,7 +197,7 @@ function PreviewCard({ detail }) {
       {detail.thumbnailUrl ? (
         <div className="flex aspect-video max-h-[calc(100vh-180px)] min-h-[320px] w-full items-center justify-center bg-[var(--color-canvas-bg)] p-3">
           <img
-            alt={`${detail.name} preview`}
+            alt={`${detail.name} 미리보기`}
             className="h-full w-full object-contain"
             src={detail.thumbnailUrl}
           />
@@ -205,7 +205,7 @@ function PreviewCard({ detail }) {
       ) : (
         <div className="flex aspect-video min-h-[320px] w-full flex-col items-center justify-center bg-[var(--color-surface-soft)]">
           <strong className="text-lg font-semibold">MSP Overlay</strong>
-          <span className="mt-2 text-sm text-[var(--color-text-sub)]">No preview uploaded</span>
+          <span className="mt-2 text-sm text-[var(--color-text-sub)]">업로드된 미리보기가 없습니다</span>
         </div>
       )}
     </Card>

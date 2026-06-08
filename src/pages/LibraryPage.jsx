@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { fetchLibraryItems } from "../api/libraryApi";
-import { fetchPlatforms } from "../api/platformApi";
 import { fetchGamesByPlatform } from "../api/gameApi";
 import { Button } from "../components/common/Button";
 import { Input } from "../components/common/Input";
+import { PlatformTabs } from "../components/common/PlatformTabs";
 import { Select } from "../components/common/Select";
 import { LibraryGrid } from "../components/library/LibraryGrid";
 import { setLibraryItems } from "../store/libraryStore";
@@ -13,52 +13,39 @@ import { buildAssetUrl } from "../utils/assetUrl";
 import { getApiErrorMessage } from "../utils/apiError";
 import { formatRelativeDate } from "../utils/dateFormat";
 
+const DEFAULT_LIBRARY_PLATFORM = "windows";
+
 export function LibraryPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState([]);
-  const [platforms, setPlatforms] = useState([]);
   const [games, setGames] = useState([]);
   const [keyword, setKeyword] = useState("");
-  const [platform, setPlatform] = useState("");
+  const [platform, setPlatform] = useState(DEFAULT_LIBRARY_PLATFORM);
   const [game, setGame] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [reloadNonce, setReloadNonce] = useState(0);
 
   useEffect(() => {
-    let active = true;
+    const nextPlatform = normalizePlatformQuery(searchParams.get("platform")) ?? DEFAULT_LIBRARY_PLATFORM;
 
-    fetchPlatforms()
-      .then((data) => {
-        if (!active) {
-          return;
-        }
+    if (searchParams.get("platform") !== nextPlatform) {
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current);
+        next.set("platform", nextPlatform);
+        return next;
+      }, { replace: true });
+    }
 
-        setPlatforms(Array.isArray(data) ? data : []);
-      })
-      .catch(() => {
-        if (!active) {
-          return;
-        }
-
-        setPlatforms([]);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
+    if (platform !== nextPlatform) {
+      setPlatform(nextPlatform);
+      setGame("");
+    }
+  }, [platform, searchParams, setSearchParams]);
 
   useEffect(() => {
     let active = true;
-
-    if (!platform) {
-      setGames([]);
-      setGame("");
-      return () => {
-        active = false;
-      };
-    }
 
     fetchGamesByPlatform(platform)
       .then((data) => {
@@ -136,34 +123,40 @@ export function LibraryPage() {
 
   function resetFilters() {
     setKeyword("");
-    setPlatform("");
     setGame("");
+  }
+
+  function handlePlatformChange(nextPlatform) {
+    if (nextPlatform === platform) {
+      return;
+    }
+
+    setPlatform(nextPlatform);
+    setGame("");
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.set("platform", nextPlatform);
+      return next;
+    });
   }
 
   return (
     <section className="space-y-8">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold">My Library</h1>
+        <h1 className="text-3xl font-semibold">내 라이브러리</h1>
         <p className="text-sm text-[var(--color-text-sub)]">
-          Saved overlays for later use.
+          나중에 사용할 오버레이를 저장해 둔 공간입니다.
         </p>
       </div>
-      <div className="grid gap-4 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 lg:grid-cols-[minmax(0,1fr)_200px_200px_auto]">
+      <PlatformTabs value={platform} onChange={handlePlatformChange} />
+      <div className="grid gap-4 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 lg:grid-cols-[minmax(0,1fr)_220px_auto]">
         <Input
           onChange={(event) => setKeyword(event.target.value)}
-          placeholder="Search saved overlays"
+          placeholder="저장한 오버레이 검색"
           value={keyword}
         />
-        <Select onChange={(event) => setPlatform(event.target.value)} value={platform}>
-          <option value="">All Platforms</option>
-          {platforms.map((item) => (
-            <option key={item.slug} value={item.slug}>
-              {item.name}
-            </option>
-          ))}
-        </Select>
         <Select onChange={(event) => setGame(event.target.value)} value={game}>
-          <option value="">All Games</option>
+          <option value="">모든 게임</option>
           {games.map((item) => (
             <option key={item.id} value={item.slug}>
               {item.displayName}
@@ -171,15 +164,15 @@ export function LibraryPage() {
           ))}
         </Select>
         <Button onClick={resetFilters} variant="secondary">
-          Reset
+          초기화
         </Button>
       </div>
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-[var(--color-text-sub)]">
-          Saved overlays: {filteredItems.length}
+          저장한 오버레이: {filteredItems.length}개
         </p>
         <Button onClick={() => navigate("/overlays")} variant="ghost">
-          Discover Overlays
+          오버레이 탐색
         </Button>
       </div>
       <LibraryGrid
@@ -212,7 +205,7 @@ function normalizeLibraryItems(data) {
       game: normalizeGame(item.overlay.game),
       author: {
         id: item.overlay.id,
-        name: item.overlay.authorName ?? "Unknown",
+        name: item.overlay.authorName ?? "알 수 없음",
       },
     },
   }));
@@ -240,4 +233,9 @@ function normalizeGame(game) {
     slug: String(game).toLowerCase(),
     displayName: game,
   };
+}
+
+function normalizePlatformQuery(value) {
+  const normalized = String(value ?? "").toLowerCase();
+  return normalized === "android" || normalized === "windows" ? normalized : null;
 }

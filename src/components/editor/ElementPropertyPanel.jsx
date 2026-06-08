@@ -32,8 +32,8 @@ const ANCHOR_SPACE_OPTIONS = ["safeFrame", "screen"];
 const FIELD_LABELS = {
   x: "X 위치",
   y: "Y 위치",
-  width: "가로",
-  height: "세로",
+  width: "너비",
+  height: "높이",
   rotation: "회전",
   opacity: "투명도",
   zIndex: "레이어 순서",
@@ -53,19 +53,19 @@ const FIELD_LABELS = {
 const FIELD_HELP = {
   x: "오브젝트 왼쪽 기준 X 좌표입니다.",
   y: "오브젝트 위쪽 기준 Y 좌표입니다.",
-  width: "오브젝트의 가로 크기입니다.",
-  height: "오브젝트의 세로 크기입니다.",
+  width: "오브젝트의 너비입니다.",
+  height: "오브젝트의 높이입니다.",
   rotation: "오브젝트 회전값입니다.",
   opacity: "0에서 100 사이의 투명도입니다.",
-  zIndex: "값이 클수록 더 위에 그려집니다.",
+  zIndex: "값이 클수록 더 앞에 그려집니다.",
   strokeWidth: "테두리 또는 선의 두께입니다.",
   cornerRadius: "사각형 모서리를 둥글게 만드는 반경입니다.",
   x1: "선이 시작되는 X 좌표입니다.",
   y1: "선이 시작되는 Y 좌표입니다.",
   x2: "선이 끝나는 X 좌표입니다.",
   y2: "선이 끝나는 Y 좌표입니다.",
-  anchor: "해상도 차이가 날 때 이 오브젝트가 붙어 있을 기준점입니다.",
-  anchorSpace: "앵커를 설계 영역 기준으로 볼지, 실제 화면 전체 기준으로 볼지 정합니다.",
+  anchor: "해상도 차이가 있을 때 오브젝트가 붙어 있을 기준점입니다.",
+  anchorSpace: "앵커를 안전 영역 기준으로 볼지, 전체 화면 기준으로 볼지 정합니다.",
   fillColor: "오브젝트 내부 색상입니다.",
   strokeColor: "오브젝트 테두리 또는 선 색상입니다.",
   dashStyle: "선의 실선, 파선, 점선 스타일입니다.",
@@ -84,8 +84,14 @@ const ANCHOR_LABELS = {
 };
 
 const ANCHOR_SPACE_LABELS = {
-  safeFrame: "설계 영역",
+  safeFrame: "안전 영역",
   screen: "전체 화면",
+};
+
+const DASH_STYLE_LABELS = {
+  solid: "실선",
+  dash: "파선",
+  dot: "점선",
 };
 
 export function ElementPropertyPanel({ element, elements = [], onChange }) {
@@ -96,7 +102,7 @@ export function ElementPropertyPanel({ element, elements = [], onChange }) {
   if (!element) {
     return (
       <Card className="min-h-[360px] p-5">
-        <h2 className="text-base font-semibold">Property Panel</h2>
+        <h2 className="text-base font-semibold">속성 패널</h2>
         <p className="mt-2 text-sm leading-6 text-[var(--color-text-sub)]">
           요소를 선택하면 속성을 편집할 수 있습니다.
         </p>
@@ -108,7 +114,7 @@ export function ElementPropertyPanel({ element, elements = [], onChange }) {
 
   return (
     <Card className="min-h-[360px] space-y-4 p-5">
-      <PanelHeader title="Property Panel" subtitle={`${element.type} | ${element.id}`} />
+      <PanelHeader title="속성 패널" subtitle={`${getElementTypeLabel(element.type)} | ${element.id}`} />
       <div className="grid gap-3 md:grid-cols-2">
         {fields.map((field) => (
           <FieldControl
@@ -143,7 +149,7 @@ function MultiElementPropertyPanel({ elements, onChange }) {
 
   return (
     <Card className="min-h-[360px] space-y-4 p-5">
-      <PanelHeader title="Property Panel" subtitle={`${elements.length}개 요소 선택됨`} />
+      <PanelHeader title="속성 패널" subtitle={`${elements.length}개 요소 선택됨`} />
       <div className="grid gap-3 md:grid-cols-2">
         {fields.map((field) => {
           const fieldElements = elements.filter((element) => field in element);
@@ -154,7 +160,7 @@ function MultiElementPropertyPanel({ elements, onChange }) {
               field={field}
               key={field}
               onChange={onChange}
-              placeholder={value === "" ? "mixed" : undefined}
+              placeholder={value === "" ? "혼합됨" : undefined}
               value={getDisplayValue(field, value)}
             />
           );
@@ -221,9 +227,11 @@ function FieldControl({ field, onChange, placeholder, value }) {
       <label className="space-y-2 text-sm">
         <FieldLabel field={field} />
         <Select onChange={(event) => onChange(field, event.target.value)} value={value || "solid"}>
-          <option value="solid">solid</option>
-          <option value="dash">dash</option>
-          <option value="dot">dot</option>
+          {Object.entries(DASH_STYLE_LABELS).map(([option, label]) => (
+            <option key={option} value={option}>
+              {label}
+            </option>
+          ))}
         </Select>
       </label>
     );
@@ -250,6 +258,16 @@ function FieldLabel({ field }) {
       {FIELD_LABELS[field] ?? field}
     </span>
   );
+}
+
+function getElementTypeLabel(type) {
+  const labels = {
+    rect: "사각형",
+    circle: "원",
+    line: "선",
+  };
+
+  return labels[type] ?? type;
 }
 
 function normalizeValue(value) {

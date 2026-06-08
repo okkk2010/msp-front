@@ -1,4 +1,4 @@
-export async function generateThumbnail(overlayJson) {
+﻿export async function generateThumbnail(overlayJson) {
   const width = 640;
   const height = 360;
   const canvasBackground = "#f8fafc";
@@ -51,7 +51,7 @@ async function renderSvgToPngBlob(svg, width, height) {
 
     const context = canvas.getContext("2d");
     if (!context) {
-      throw new Error("Canvas 2D context를 만들 수 없습니다.");
+      throw new Error("Canvas 2D 컨텍스트를 만들 수 없습니다.");
     }
 
     context.drawImage(image, 0, 0, width, height);

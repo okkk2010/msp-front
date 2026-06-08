@@ -11,7 +11,7 @@ export function LayerPanel({
   return (
     <Card className="space-y-3 p-5">
       <div>
-        <h2 className="text-base font-semibold">Layer Panel</h2>
+        <h2 className="text-base font-semibold">레이어 패널</h2>
         <p className="mt-1 text-sm text-[var(--color-text-sub)]">
           현재 요소 목록과 zIndex 상태를 표시합니다.
         </p>
@@ -39,12 +39,12 @@ export function LayerPanel({
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-medium text-[var(--color-text-main)]">
-                        {item.type}
+                        {getElementTypeLabel(item.type)}
                       </p>
                       <p className="text-xs text-[var(--color-text-sub)]">
                         {item.id}
-                        {item.locked ? " | locked" : ""}
-                        {item.visible === false ? " | hidden" : ""}
+                        {item.locked ? " | 잠김" : ""}
+                        {item.visible === false ? " | 숨김" : ""}
                       </p>
                     </div>
                     <span className="text-xs text-[var(--color-text-sub)]">z {item.zIndex}</span>
@@ -52,18 +52,28 @@ export function LayerPanel({
                 </button>
                 <div className="mt-3 flex gap-2">
                   <Button onClick={() => onMoveFront(item.id)} variant="ghost">
-                    Front
+                    앞으로
                   </Button>
                   <Button onClick={() => onMoveBack(item.id)} variant="ghost">
-                    Back
+                    뒤로
                   </Button>
                 </div>
               </div>
             ))
         ) : (
-          <p className="text-sm text-[var(--color-text-sub)]">아직 추가된 요소가 없습니다.</p>
+          <p className="text-sm text-[var(--color-text-sub)]">아직 추가한 요소가 없습니다.</p>
         )}
       </div>
     </Card>
   );
+}
+
+function getElementTypeLabel(type) {
+  const labels = {
+    rect: "사각형",
+    circle: "원",
+    line: "선",
+  };
+
+  return labels[type] ?? type;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Card } from "../common/Card";
 
@@ -241,9 +241,9 @@ export function OverlayCanvas({
     <Card className="flex min-h-0 flex-col self-stretch rounded-none border-x-0 p-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-semibold">Canvas Area</h2>
+          <h2 className="text-base font-semibold">캔버스 영역</h2>
           <p className="mt-1 text-sm text-[var(--color-text-sub)]">
-            Select moves and resizes elements. Rect and Circle draw by dragging on the canvas.
+            선택 도구로 요소를 이동하고 크기를 조절합니다. 사각형과 원은 캔버스에서 드래그해 그립니다.
           </p>
         </div>
         <div className="flex flex-wrap items-end justify-end gap-3">
@@ -251,7 +251,7 @@ export function OverlayCanvas({
             <p>
               {canvas.baseWidth} x {canvas.baseHeight}
             </p>
-            <p>{visibleElements.length} visible</p>
+            <p>표시 중인 요소 {visibleElements.length}개</p>
           </div>
         </div>
       </div>
@@ -262,9 +262,9 @@ export function OverlayCanvas({
         >
           {!visibleElements.length ? (
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-              <p className="text-lg font-semibold">Canvas Ready</p>
+              <p className="text-lg font-semibold">캔버스 준비 완료</p>
               <p className="mt-2 max-w-md text-sm leading-6 text-[var(--color-text-sub)]">
-                Select the Rect or Circle tool and drag on the canvas to draw the first shape.
+                사각형 또는 원 도구를 선택한 뒤 캔버스에서 드래그해 첫 도형을 그리세요.
               </p>
             </div>
           ) : null}
@@ -486,16 +486,16 @@ export function OverlayCanvas({
 
 function ElementContextMenu({ canPaste, isCanvasMenu, onAction, x, y }) {
   const items = isCanvasMenu
-    ? [{ action: "paste", disabled: !canPaste, label: "Paste" }]
+    ? [{ action: "paste", disabled: !canPaste, label: "붙여넣기" }]
     : [
-        { action: "delete", label: "Delete" },
-        { action: "forward", label: "Bring Forward" },
-        { action: "backward", label: "Send Backward" },
-        { action: "front", label: "Bring to Front" },
-        { action: "back", label: "Send to Back" },
-        { action: "copy", label: "Copy" },
-        { action: "paste", disabled: !canPaste, label: "Paste" },
-        { action: "duplicate", label: "Duplicate" },
+        { action: "delete", label: "삭제" },
+        { action: "forward", label: "앞으로 가져오기" },
+        { action: "backward", label: "뒤로 보내기" },
+        { action: "front", label: "맨 앞으로" },
+        { action: "back", label: "맨 뒤로" },
+        { action: "copy", label: "복사" },
+        { action: "paste", disabled: !canPaste, label: "붙여넣기" },
+        { action: "duplicate", label: "복제" },
       ];
 
   return (
@@ -768,7 +768,7 @@ function AnchorIndicator({ element }) {
   const anchor = element.anchor ?? "top-left";
   const anchorSpace = element.anchorSpace ?? "safeFrame";
   const point = getElementAnchorPoint(element, anchor);
-  const label = `${getAnchorLabel(anchor)} / ${anchorSpace === "screen" ? "전체 화면" : "설계 영역"}`;
+  const label = `${getAnchorLabel(anchor)} / ${anchorSpace === "screen" ? "전체 화면" : "안전 영역"}`;
   const labelPosition = getAnchorLabelPosition(point, anchor);
 
   return (
@@ -816,7 +816,7 @@ function VisualAnchorIndicator({ canvas, element }) {
   const elementPoint = getElementAnchorPoint(element, anchor);
   const referencePoint = getCanvasAnchorPoint(canvas, anchor);
   const guide = getAnchorReferenceGuide(canvas, anchor);
-  const label = `${getVisualAnchorLabel(anchor)} / ${anchorSpace === "screen" ? "전체 화면" : "설계 영역"}`;
+  const label = `${getVisualAnchorLabel(anchor)} / ${anchorSpace === "screen" ? "전체 화면" : "안전 영역"}`;
   const labelPosition = getCanvasAnchorLabelPosition(canvas, referencePoint, anchor);
 
   return (
@@ -1113,7 +1113,6 @@ function getAnchorLabel(anchor) {
 
   return labels[anchor] ?? labels["top-left"];
 }
-
 function getAnchorLabelPosition(point, anchor) {
   const y = anchor.includes("bottom") ? point.y - 18 : point.y + 30;
 

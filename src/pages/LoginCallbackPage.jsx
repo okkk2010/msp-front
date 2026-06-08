@@ -79,10 +79,10 @@ export function LoginCallbackPage() {
 
   return (
     <section className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8">
-      <h1 className="text-3xl font-semibold">Login Callback</h1>
+      <h1 className="text-3xl font-semibold">로그인 콜백</h1>
       {!error ? (
         <div className="mt-4">
-          <LoadingSpinner label="로그인 결과를 처리하고 있습니다." />
+          <LoadingSpinner label="로그인 결과를 처리하는 중입니다." />
         </div>
       ) : (
         <>

@@ -3,7 +3,7 @@ import { createStore } from "./createStore";
 const INITIAL_FILTER_STATE = {
   keyword: "",
   code: "",
-  platform: "",
+  platform: "windows",
   game: "",
   sort: "newest",
   page: 0,
@@ -64,8 +64,11 @@ export function setPage(page) {
   }));
 }
 
-export function resetFilters() {
-  overlayFilterStore.setState(INITIAL_FILTER_STATE);
+export function resetFilters(platform = INITIAL_FILTER_STATE.platform) {
+  overlayFilterStore.setState({
+    ...INITIAL_FILTER_STATE,
+    platform,
+  });
 }
 
 export { overlayFilterStore };

@@ -20,7 +20,7 @@ export function Button({
   return (
     <Component
       className={[
-        "inline-flex min-w-0 items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold leading-5 transition disabled:cursor-not-allowed disabled:opacity-60",
+        "inline-flex min-w-0 items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold leading-5 transition disabled:cursor-not-allowed disabled:opacity-60",
         VARIANT_CLASS[variant],
         className,
       ].join(" ")}

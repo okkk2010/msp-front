@@ -45,7 +45,7 @@ export function LibraryGrid({
   if (!items.length) {
     return (
       <EmptyState
-        description="마음에 드는 오버레이를 찾아 라이브러리에 저장해보세요."
+        description="마음에 드는 오버레이를 찾아 라이브러리에 저장해 보세요."
         title="아직 저장한 오버레이가 없습니다."
       />
     );

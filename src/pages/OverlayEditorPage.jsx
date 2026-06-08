@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import { useBeforeUnload, useBlocker, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { fetchGamesByPlatform } from "../api/gameApi";
@@ -108,7 +108,7 @@ export function OverlayEditorPage() {
       .then(async (detail) => {
         const jsonUrl = buildAssetUrl(detail?.jsonPath);
         if (!jsonUrl) {
-          throw new Error("Overlay JSON path is unavailable.");
+          throw new Error("오버레이 JSON 경로를 사용할 수 없습니다.");
         }
 
         const [overlayJson, games] = await Promise.all([
@@ -128,7 +128,7 @@ export function OverlayEditorPage() {
 
         loadFromOverlayJson(overlayJson, {
           overlayId: isCustomizeMode ? "" : detail.overlayId,
-          name: isCustomizeMode ? `${detail.name ?? overlayJson.name} Copy` : detail.name ?? overlayJson.name,
+          name: isCustomizeMode ? `${detail.name ?? overlayJson.name} 복사본` : detail.name ?? overlayJson.name,
           description: detail.description ?? overlayJson.description ?? "",
           code: nextCode,
           platform: detail.platform ?? overlayJson.platform,
@@ -204,7 +204,7 @@ export function OverlayEditorPage() {
 
       if (!deletableIds.length) {
         showToast({
-          message: "Locked elements cannot be deleted.",
+          message: "?좉릿 ?붿냼????젣?????놁뒿?덈떎.",
           type: "error",
         });
         return;
@@ -217,7 +217,7 @@ export function OverlayEditorPage() {
     const target = elements.find((element) => element.id === id) ?? null;
     if (!id || !target) {
       showToast({
-        message: "Select an element before deleting.",
+        message: "삭제할 요소를 먼저 선택해 주세요.",
         type: "info",
       });
       return;
@@ -225,7 +225,7 @@ export function OverlayEditorPage() {
 
     if (target.locked) {
       showToast({
-        message: "Locked element cannot be deleted.",
+        message: "?좉릿 ?붿냼????젣?????놁뒿?덈떎.",
         type: "error",
       });
       return;
@@ -262,7 +262,7 @@ export function OverlayEditorPage() {
 
     if (!targets.length) {
       showToast({
-        message: "Select an element before copying.",
+        message: "복사할 요소를 먼저 선택해 주세요.",
         type: "info",
       });
       return;
@@ -274,7 +274,7 @@ export function OverlayEditorPage() {
   function handlePasteElement() {
     if (!copiedElements.length) {
       showToast({
-        message: "Copy an element before pasting.",
+        message: "붙여넣기 전에 요소를 먼저 복사해 주세요.",
         type: "info",
       });
       return;
@@ -354,7 +354,7 @@ export function OverlayEditorPage() {
 
       if (!editableIds.length) {
         showToast({
-          message: "Selected elements cannot use this property.",
+          message: "선택한 요소에는 이 속성을 사용할 수 없습니다.",
           type: "info",
         });
         return;
@@ -372,7 +372,7 @@ export function OverlayEditorPage() {
 
     if (selectedElement?.locked) {
       showToast({
-        message: "Locked element cannot be edited.",
+        message: "?좉릿 ?붿냼???몄쭛?????놁뒿?덈떎.",
         type: "error",
       });
       return;
@@ -410,7 +410,7 @@ export function OverlayEditorPage() {
 
     if (!validation.isValid) {
       showToast({
-        message: validation.errors[0] ?? "Overlay JSON is invalid.",
+        message: validation.errors[0] ?? "오버레이 JSON이 올바르지 않습니다.",
         type: "error",
       });
       setJsonPreview({
@@ -433,7 +433,7 @@ export function OverlayEditorPage() {
     URL.revokeObjectURL(url);
 
     showToast({
-      message: "Overlay JSON exported.",
+      message: "오버레이 JSON을 내보냈습니다.",
       type: "success",
     });
   }
@@ -494,7 +494,7 @@ export function OverlayEditorPage() {
         open: false,
       }));
       showToast({
-        message: "Overlay JSON을 불러왔습니다. 업로드 전 code와 메타 정보를 다시 확인하세요.",
+        message: "오버레이 JSON을 불러왔습니다. 업로드 전 코드와 메타 정보를 다시 확인하세요.",
         type: "success",
       });
     } catch {
@@ -524,7 +524,7 @@ export function OverlayEditorPage() {
         summary: validation.summary,
       });
       showToast({
-        message: validation.errors[0] ?? "Overlay JSON is invalid.",
+        message: validation.errors[0] ?? "오버레이 JSON이 올바르지 않습니다.",
         type: "error",
       });
       return;
@@ -544,10 +544,10 @@ export function OverlayEditorPage() {
 
       showToast({
         message: isEditMode
-          ? "Overlay updated successfully."
+          ? "오버레이를 수정했습니다."
           : isCustomizeMode
-            ? "Custom overlay created successfully."
-            : "Overlay uploaded successfully.",
+            ? "커스텀 오버레이를 만들었습니다."
+            : "오버레이를 업로드했습니다.",
         type: "success",
       });
 
@@ -576,7 +576,7 @@ export function OverlayEditorPage() {
     return (
       <section className="flex h-[calc(100vh-7rem)] items-center justify-center">
         <p className="text-sm text-[var(--color-text-sub)]">
-          {isCustomizeMode ? "Loading overlay for customization..." : "Loading overlay for editing..."}
+          {isCustomizeMode ? "커스터마이즈할 오버레이를 불러오는 중..." : "편집할 오버레이를 불러오는 중..."}
         </p>
       </section>
     );
@@ -585,10 +585,10 @@ export function OverlayEditorPage() {
   if (loadError) {
     return (
       <section className="space-y-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
-        <h1 className="text-xl font-semibold">Unable to load overlay</h1>
+        <h1 className="text-xl font-semibold">오버레이를 불러올 수 없습니다</h1>
         <p className="text-sm text-[var(--color-text-sub)]">{loadError}</p>
         <Button onClick={() => navigate(ROUTES.overlays)} variant="secondary">
-          Back to Discover
+          탐색으로 돌아가기
         </Button>
       </section>
     );
@@ -643,7 +643,7 @@ export function OverlayEditorPage() {
         onSelectElements={selectElements}
         onToggleElementSelection={toggleElementSelection}
         onUpload={() => setIsUploadModalOpen(true)}
-        uploadActionLabel={isEditMode ? "Save Changes" : isCustomizeMode ? "Create Overlay" : "Upload"}
+        uploadActionLabel={isEditMode ? "변경사항 저장" : isCustomizeMode ? "오버레이 만들기" : "업로드"}
         selectedElement={selectedElement}
         selectedElementId={selectedElementId}
         selectedElementIds={selectedElementIds}
@@ -659,7 +659,7 @@ export function OverlayEditorPage() {
         onSubmit={handleUpload}
         open={isUploadModalOpen}
         overlayMeta={overlayMeta}
-        submitLabel={isEditMode ? "Save Changes" : isCustomizeMode ? "Create Overlay" : "Upload"}
+        submitLabel={isEditMode ? "변경사항 저장" : isCustomizeMode ? "오버레이 만들기" : "업로드"}
       />
       <UnsavedChangesModal
         open={blocker.state === "blocked"}
@@ -676,7 +676,7 @@ export function OverlayEditorPage() {
 async function fetchJsonFile(url) {
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error("Failed to load overlay JSON.");
+    throw new Error("오버레이 JSON을 불러오지 못했습니다.");
   }
 
   return response.json();
@@ -699,7 +699,7 @@ function generateCode() {
 
 function UnsavedChangesModal({ open, onLeave, onStay }) {
   return (
-    <Modal open={open} title="Unsaved Changes">
+    <Modal open={open} title="저장되지 않은 변경사항">
       <p className="text-sm leading-6 text-[var(--color-text-sub)]">
         저장하지 않은 편집 내용이 있습니다. 이 페이지를 떠나면 현재 작업 내용이 사라집니다.
       </p>
@@ -714,12 +714,11 @@ function UnsavedChangesModal({ open, onLeave, onStay }) {
     </Modal>
   );
 }
-
 function cloneElement(element, zIndex) {
   const id =
     typeof crypto !== "undefined" && crypto.randomUUID
       ? crypto.randomUUID()
-      : `${element.type}-${Date.now()}`;
+      : element.type + "-" + Date.now();
   const copy = {
     ...element,
     id,

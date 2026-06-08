@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { fetchGamesByPlatform } from "../api/gameApi";
 import { saveOverlayToLibrary } from "../api/libraryApi";
 import { fetchOverlayList } from "../api/overlayApi";
-import { fetchPlatforms } from "../api/platformApi";
 import { Button } from "../components/common/Button";
+import { PlatformTabs } from "../components/common/PlatformTabs";
 import { OverlayCodeSearch } from "../components/overlay/OverlayCodeSearch";
 import { OverlayFilterBar } from "../components/overlay/OverlayFilterBar";
 import { OverlayGrid } from "../components/overlay/OverlayGrid";
@@ -21,6 +21,7 @@ const DEFAULT_GAME_PLATFORM = "windows";
 
 export function OverlayListPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
   const { showToast } = useToast();
   const {
@@ -33,38 +34,26 @@ export function OverlayListPage() {
     setSort,
   } = useOverlaySearch();
   const [items, setItems] = useState([]);
-  const [platforms, setPlatforms] = useState([]);
   const [games, setGames] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [reloadNonce, setReloadNonce] = useState(0);
 
   useEffect(() => {
-    let active = true;
+    const nextPlatform = normalizePlatformQuery(searchParams.get("platform")) ?? DEFAULT_GAME_PLATFORM;
 
-    fetchPlatforms()
-      .then((data) => {
-        if (!active) {
-          return;
-        }
+    if (searchParams.get("platform") !== nextPlatform) {
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current);
+        next.set("platform", nextPlatform);
+        return next;
+      }, { replace: true });
+    }
 
-        setPlatforms(Array.isArray(data) ? data : []);
-      })
-      .catch(() => {
-        if (!active) {
-          return;
-        }
-
-        setPlatforms([
-          { id: 1, name: "Windows", slug: "windows" },
-          { id: 2, name: "Android", slug: "android" },
-        ]);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
+    if (filters.platform !== nextPlatform) {
+      setPlatform(nextPlatform);
+    }
+  }, [filters.platform, searchParams, setPlatform, setSearchParams]);
 
   useEffect(() => {
     let active = true;
@@ -130,7 +119,7 @@ export function OverlayListPage() {
   async function handleSave(item) {
     if (!isAuthenticated) {
       showToast({
-        message: "Log in to save overlays to your library.",
+        message: "라이브러리에 저장하려면 로그인해 주세요.",
         type: "info",
       });
       navigate("/library");
@@ -152,7 +141,7 @@ export function OverlayListPage() {
         ),
       );
       showToast({
-        message: "Saved to your library.",
+        message: "라이브러리에 저장했습니다.",
         type: "success",
       });
     } catch (requestError) {
@@ -163,20 +152,38 @@ export function OverlayListPage() {
     }
   }
 
+  function handlePlatformChange(nextPlatform) {
+    if (nextPlatform === filters.platform) {
+      return;
+    }
+
+    setPlatform(nextPlatform);
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.set("platform", nextPlatform);
+      return next;
+    });
+  }
+
+  function handleResetFilters() {
+    resetFilters(filters.platform || DEFAULT_GAME_PLATFORM);
+  }
+
   return (
     <section className="space-y-6">
       <div className="flex flex-col gap-4 border-b border-[var(--color-border)] pb-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase text-[var(--color-primary)]">Community overlays</p>
-          <h1 className="text-3xl font-semibold">Find a layout that already works</h1>
+          <p className="text-xs font-semibold uppercase text-[var(--color-primary)]">커뮤니티 오버레이</p>
+          <h1 className="text-3xl font-semibold">바로 쓸 수 있는 레이아웃을 찾아보세요</h1>
           <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-sub)]">
-            Browse overlays shared by other players, compare preview quality, and save useful layouts before editing.
+            다른 플레이어가 공유한 오버레이를 둘러보고 미리보기 품질을 비교한 뒤, 편집 전에 유용한 레이아웃을 저장하세요.
           </p>
         </div>
         <Button className="w-full lg:w-auto" onClick={() => navigate("/editor")}>
-          Create Overlay
+          오버레이 만들기
         </Button>
       </div>
+      <PlatformTabs value={filters.platform || DEFAULT_GAME_PLATFORM} onChange={handlePlatformChange} />
 
       <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
         <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
@@ -196,14 +203,8 @@ export function OverlayListPage() {
             filters={filters}
             games={games}
             onGameChange={(event) => setGame(event.target.value)}
-            onPlatformChange={(event) => setPlatform(event.target.value)}
-            onReset={resetFilters}
-            onSelectCategory={(tab) => {
-              setPlatform(tab.platform);
-              setSort(tab.sort);
-            }}
-            onSortChange={(event) => setSort(event.target.value)}
-            platforms={platforms}
+            onReset={handleResetFilters}
+            onSortChange={setSort}
           />
         </div>
 
@@ -211,14 +212,14 @@ export function OverlayListPage() {
           <div className="flex flex-col gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-semibold text-[var(--color-text-main)]">
-                {isLoading ? "Loading overlays" : `${items.length} overlays found`}
+                {isLoading ? "오버레이 불러오는 중" : `오버레이 ${items.length}개 찾음`}
               </p>
               <p className="text-xs text-[var(--color-text-sub)]">
-                Page {filters.page + 1} · {filters.size} per page
+                {filters.page + 1}페이지 | 페이지당 {filters.size}개
               </p>
             </div>
-            <Button onClick={resetFilters} variant="ghost">
-              Clear Search
+            <Button onClick={handleResetFilters} variant="ghost">
+              검색 초기화
             </Button>
           </div>
           <OverlayGrid
@@ -237,6 +238,11 @@ export function OverlayListPage() {
   );
 }
 
+function normalizePlatformQuery(value) {
+  const normalized = String(value ?? "").toLowerCase();
+  return normalized === "android" || normalized === "windows" ? normalized : null;
+}
+
 function normalizeGameItems(data) {
   const games = Array.isArray(data) ? data : [];
 
@@ -244,7 +250,7 @@ function normalizeGameItems(data) {
     .map((game) => ({
       id: game.id ?? game.slug ?? game.displayName,
       slug: game.slug ?? "",
-      displayName: game.displayName ?? game.name ?? game.slug ?? "Unknown game",
+      displayName: game.displayName ?? game.name ?? game.slug ?? "알 수 없는 게임",
       platform: game.platform ?? DEFAULT_GAME_PLATFORM,
     }))
     .filter((game) => game.slug || game.displayName);
@@ -264,7 +270,7 @@ function normalizeOverlayItems(data) {
     thumbnailUrl: buildAssetUrl(item.thumbnailPath),
     author: {
       id: item.id,
-      name: item.authorName ?? "Unknown",
+      name: item.authorName ?? "알 수 없음",
     },
     elementTypes: item.elementTypes ?? [],
     isSaved: Boolean(item.isSaved),

@@ -10,11 +10,11 @@ import { Input } from "../common/Input";
 import { MobileDrawer } from "./MobileDrawer";
 
 const NAV_ITEMS = [
-  { label: "Home", to: ROUTES.home, end: true },
-  { label: "Discover", to: ROUTES.overlays },
-  { label: "Editor", to: ROUTES.editor },
-  { label: "Library", to: ROUTES.library },
-  { label: "Docs", href: "/docs/AGENTS.md" },
+  { label: "홈", to: ROUTES.home, end: true },
+  { label: "탐색", to: ROUTES.overlays },
+  { label: "에디터", to: ROUTES.editor },
+  { label: "라이브러리", to: ROUTES.library },
+  { label: "문서", href: "/docs/AGENTS.md" },
 ];
 
 export function Header() {
@@ -25,33 +25,33 @@ export function Header() {
   return (
     <>
       <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 backdrop-blur">
-        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-6 lg:px-10">
-          <NavLink className="text-lg font-semibold tracking-tight" to={ROUTES.home}>
+        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+          <NavLink className="shrink-0 whitespace-nowrap text-lg font-semibold tracking-tight" to={ROUTES.home}>
             MSP Overlay
           </NavLink>
-          <div className="hidden items-center gap-2 lg:flex">
+          <div className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex xl:gap-2">
             <DesktopNav />
           </div>
-          <div className="hidden min-w-0 items-center gap-3 md:flex">
-            <Input className="w-44 lg:w-64 xl:w-96" placeholder="Search overlays" />
+          <div className="hidden min-w-0 shrink items-center gap-2 md:flex">
+            <Input className="hidden w-44 xl:block 2xl:w-72" placeholder="오버레이 검색" />
             <Button className="shrink-0 whitespace-nowrap" onClick={() => navigate(ROUTES.editor)}>
-              Create Overlay
+              오버레이 만들기
             </Button>
             {!isReady ? (
-              <span className="text-sm text-[var(--color-text-sub)]">Checking session...</span>
+              <span className="shrink-0 whitespace-nowrap text-sm text-[var(--color-text-sub)]">세션 확인 중...</span>
             ) : isAuthenticated ? (
               <>
-                <UserProfileButton userName={user?.name ?? "User"} />
+                <UserProfileButton userName={user?.name ?? "사용자"} />
                 <Button className="shrink-0 whitespace-nowrap" onClick={signOut} variant="ghost">
-                  Logout
+                  로그아웃
                 </Button>
               </>
             ) : (
-              <LoginButton variant="ghost">Login</LoginButton>
+              <LoginButton variant="ghost">로그인</LoginButton>
             )}
           </div>
           <Button className="md:hidden" onClick={() => setDrawerOpen(true)} variant="ghost">
-            Menu
+            메뉴
           </Button>
         </div>
         {error && !isAuthenticated ? (
@@ -78,7 +78,7 @@ function DesktopNav() {
     item.href ? (
       <a
         key={item.label}
-        className="rounded-xl px-4 py-2 text-sm font-medium text-[var(--color-text-sub)] transition-colors hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text-main)]"
+        className="min-w-fit whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium leading-5 text-[var(--color-text-sub)] transition-colors hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text-main)] xl:px-4"
         href={item.href}
       >
         {item.label}
@@ -88,7 +88,7 @@ function DesktopNav() {
         key={item.to}
         className={({ isActive }) =>
           [
-            "rounded-xl px-4 py-2 text-sm font-medium transition-colors",
+            "min-w-fit whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium leading-5 transition-colors xl:px-4",
             isActive
               ? "bg-[var(--color-primary-soft)] text-[var(--color-primary)]"
               : "text-[var(--color-text-sub)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text-main)]",

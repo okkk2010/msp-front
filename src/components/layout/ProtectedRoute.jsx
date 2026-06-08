@@ -14,7 +14,7 @@ export function ProtectedRoute({ children }) {
   if (!isReady) {
     return (
       <Card className="py-10 text-center">
-        <p className="text-sm text-[var(--color-text-sub)]">접근 권한을 확인하고 있습니다.</p>
+        <p className="text-sm text-[var(--color-text-sub)]">접근 권한을 확인하는 중입니다.</p>
       </Card>
     );
   }
@@ -24,12 +24,12 @@ export function ProtectedRoute({ children }) {
       <Card className="mx-auto max-w-2xl p-8 text-center">
         <h1 className="text-2xl font-semibold">로그인이 필요한 기능입니다.</h1>
         <p className="mt-3 text-sm leading-6 text-[var(--color-text-sub)]">
-          Editor와 Library는 로그인 후 사용할 수 있습니다. 로그인 후에는 현재 페이지로 다시 돌아옵니다.
+          에디터와 라이브러리는 로그인 후 사용할 수 있습니다. 로그인 후 현재 페이지로 다시 돌아옵니다.
         </p>
         {error ? <p className="mt-3 text-sm text-[var(--color-danger)]">{error}</p> : null}
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <LoginButton redirectTo={redirectTo} variant="secondary">
-            Continue with Google
+            Google로 계속하기
           </LoginButton>
           <Button onClick={() => navigate(-1)} variant="ghost">
             이전 페이지로

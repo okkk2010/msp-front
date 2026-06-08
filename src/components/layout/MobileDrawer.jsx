@@ -24,7 +24,7 @@ export function MobileDrawer({
       >
         <div className="flex items-center justify-between">
           <strong className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-text-sub)]">
-            Menu
+            메뉴
           </strong>
           <Button onClick={onClose} variant="ghost">
             닫기
@@ -62,16 +62,16 @@ export function MobileDrawer({
         </nav>
         <div className="mt-auto border-t border-[var(--color-border)] pt-4">
           {!isReady ? (
-            <p className="text-sm text-[var(--color-text-sub)]">Checking session...</p>
+            <p className="text-sm text-[var(--color-text-sub)]">세션 확인 중...</p>
           ) : isAuthenticated ? (
             <div className="space-y-3">
-              <p className="text-sm text-[var(--color-text-sub)]">{userName ?? "User"}</p>
+              <p className="text-sm text-[var(--color-text-sub)]">{userName ?? "사용자"}</p>
               <Button className="w-full" onClick={onSignOut} variant="secondary">
-                Logout
+                로그아웃
               </Button>
             </div>
           ) : (
-            <LoginButton variant="secondary">Continue with Google</LoginButton>
+            <LoginButton variant="secondary">Google로 계속하기</LoginButton>
           )}
         </div>
       </aside>

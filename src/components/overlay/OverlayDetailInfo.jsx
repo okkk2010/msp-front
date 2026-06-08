@@ -1,12 +1,13 @@
 import { Badge } from "../common/Badge";
 import { Card } from "../common/Card";
+import { PlatformIconBadge } from "../common/PlatformIconBadge";
 
 export function OverlayDetailInfo({ detail }) {
   return (
     <Card className="space-y-5 p-5">
       <div className="space-y-3">
         <div className="flex flex-wrap gap-2">
-          {detail.platform ? <Badge tone="accent">{detail.platform}</Badge> : null}
+          {detail.platform ? <PlatformIconBadge platform={detail.platform} size="lg" /> : null}
           {detail.game ? <Badge>{detail.game}</Badge> : null}
           {detail.code ? <Badge tone="primary">{detail.code}</Badge> : null}
         </div>
@@ -17,19 +18,19 @@ export function OverlayDetailInfo({ detail }) {
               {(detail.author?.name ?? "U").charAt(0).toUpperCase()}
             </span>
             <span className="min-w-0">
-              Shared by <strong className="font-semibold text-[var(--color-text-main)]">{detail.author?.name ?? "Unknown"}</strong>
+              <strong className="font-semibold text-[var(--color-text-main)]">{detail.author?.name ?? "알 수 없음"}</strong> 님이 공유함
             </span>
           </div>
         </div>
         <p className="max-w-3xl break-words text-sm leading-6 text-[var(--color-text-sub)]">
-          {detail.description || "No description has been added for this overlay yet."}
+          {detail.description || "이 오버레이에는 아직 설명이 추가되지 않았습니다."}
         </p>
       </div>
       <dl className="grid gap-3 text-sm text-[var(--color-text-sub)] sm:grid-cols-2">
-        <MetaItem label="Overlay ID" value={detail.overlayId} />
-        <MetaItem label="Created" value={detail.createdAtFormatted} />
-        <MetaItem label="Updated" value={detail.updatedAtFormatted} />
-        <MetaItem label="Schema" value={detail.schemaVersion || "Unavailable"} />
+        <MetaItem label="오버레이 ID" value={detail.overlayId} />
+        <MetaItem label="생성일" value={detail.createdAtFormatted} />
+        <MetaItem label="수정일" value={detail.updatedAtFormatted} />
+        <MetaItem label="스키마" value={detail.schemaVersion || "없음"} />
       </dl>
     </Card>
   );

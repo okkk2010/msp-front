@@ -1,5 +1,12 @@
 # Worklogs
 
+- [2026-06-08_platform-icon-badges.md](./2026-06-08_platform-icon-badges.md)
+- [2026-06-08_platform-tabs-icons.md](./2026-06-08_platform-tabs-icons.md)
+- [2026-06-08_platform-tabs-discover-library.md](./2026-06-08_platform-tabs-discover-library.md)
+- [2026-06-08_discover-card-section-layout.md](./2026-06-08_discover-card-section-layout.md)
+- [2026-06-08_discover-overlay-card-grid.md](./2026-06-08_discover-overlay-card-grid.md)
+- [2026-06-08_fix-korean-text-wrapping.md](./2026-06-08_fix-korean-text-wrapping.md)
+- [2026-06-08_translate-front-text-korean.md](./2026-06-08_translate-front-text-korean.md)
 - [2026-06-06_editor-toolbar-and-multi-select-actions.md](./2026-06-06_editor-toolbar-and-multi-select-actions.md)
 - [2026-06-06_remove-scaffold-footer.md](./2026-06-06_remove-scaffold-footer.md)
 - [2026-06-06_move-anchor-label-to-canvas.md](./2026-06-06_move-anchor-label-to-canvas.md)

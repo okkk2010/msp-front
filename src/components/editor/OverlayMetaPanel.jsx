@@ -81,20 +81,20 @@ export function OverlayMetaPanel({
   return (
     <Card className="space-y-4 p-5">
       <div>
-        <h2 className="text-base font-semibold">Meta Panel</h2>
+        <h2 className="text-base font-semibold">기본 정보</h2>
         <p className="mt-1 text-sm text-[var(--color-text-sub)]">
           업로드와 JSON 생성에 필요한 기본 정보를 입력합니다.
         </p>
       </div>
       <label className="space-y-2 text-sm">
-        <span className="text-[var(--color-text-sub)]">name</span>
+        <span className="text-[var(--color-text-sub)]">이름</span>
         <Input
           onChange={(event) => onMetaChange({ name: event.target.value })}
           value={overlayMeta.name}
         />
       </label>
       <label className="space-y-2 text-sm">
-        <span className="text-[var(--color-text-sub)]">description</span>
+        <span className="text-[var(--color-text-sub)]">설명</span>
         <Textarea
           onChange={(event) => onMetaChange({ description: event.target.value })}
           value={overlayMeta.description}
@@ -102,7 +102,7 @@ export function OverlayMetaPanel({
       </label>
       <div className="grid gap-3 md:grid-cols-2">
         <label className="space-y-2 text-sm">
-          <span className="text-[var(--color-text-sub)]">code</span>
+          <span className="text-[var(--color-text-sub)]">코드</span>
           <Input
             maxLength={6}
             onChange={(event) => onMetaChange({ code: event.target.value.toUpperCase() })}
@@ -119,11 +119,11 @@ export function OverlayMetaPanel({
             }
             variant="secondary"
           >
-            Generate Code
+            코드 생성
           </Button>
         </div>
         <label className="space-y-2 text-sm">
-          <span className="text-[var(--color-text-sub)]">platform</span>
+          <span className="text-[var(--color-text-sub)]">플랫폼</span>
           <Select
             onChange={(event) =>
               onMetaChange({
@@ -142,7 +142,7 @@ export function OverlayMetaPanel({
           </Select>
         </label>
         <label className="space-y-2 text-sm">
-          <span className="text-[var(--color-text-sub)]">game</span>
+          <span className="text-[var(--color-text-sub)]">게임</span>
           <Select
             onChange={(event) => {
               const selected = games.find((game) => String(game.id) === event.target.value);
@@ -153,7 +153,7 @@ export function OverlayMetaPanel({
             }}
             value={overlayMeta.gameId ?? ""}
           >
-            <option value="">Select game</option>
+            <option value="">게임 선택</option>
             {games.map((game) => (
               <option key={game.id} value={game.id}>
                 {game.displayName}
@@ -162,14 +162,14 @@ export function OverlayMetaPanel({
           </Select>
         </label>
         <label className="space-y-2 text-sm">
-          <span className="text-[var(--color-text-sub)]">baseWidth</span>
+          <span className="text-[var(--color-text-sub)]">기준 너비</span>
           <Input
             onChange={(event) => onCanvasChange({ baseWidth: Number(event.target.value) })}
             value={canvas.baseWidth}
           />
         </label>
         <label className="space-y-2 text-sm">
-          <span className="text-[var(--color-text-sub)]">baseHeight</span>
+          <span className="text-[var(--color-text-sub)]">기준 높이</span>
           <Input
             onChange={(event) => onCanvasChange({ baseHeight: Number(event.target.value) })}
             value={canvas.baseHeight}
@@ -177,7 +177,7 @@ export function OverlayMetaPanel({
         </label>
       </div>
       <label className="space-y-2 text-sm">
-        <span className="text-[var(--color-text-sub)]">opacity</span>
+        <span className="text-[var(--color-text-sub)]">투명도</span>
         <Slider max={100} min={0} onChange={(event) => onOpacityChange(Number(event.target.value))} value={opacity} />
       </label>
     </Card>

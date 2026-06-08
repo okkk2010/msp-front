@@ -91,13 +91,13 @@ export function UploadOverlayModal({
   }, [open, overlayMeta.platform]);
 
   const isEditMode = mode === "edit";
-  const resolvedSubmitLabel = submitLabel ?? (isEditMode ? "Save Changes" : "Upload");
+  const resolvedSubmitLabel = submitLabel ?? (isEditMode ? "변경사항 저장" : "업로드");
 
   return (
     <Modal
       className="max-h-[90vh] max-w-5xl overflow-y-auto"
       open={open}
-      title={isEditMode ? "Save Overlay Changes" : "Upload Overlay"}
+      title={isEditMode ? "오버레이 변경사항 저장" : "오버레이 업로드"}
     >
       <form
         className="grid gap-5"
@@ -109,21 +109,21 @@ export function UploadOverlayModal({
         <OverlayPreview canvas={canvas} elements={sortedElements} />
         <div className="grid gap-4 md:grid-cols-2">
           <label className="space-y-2 text-sm md:col-span-2">
-            <span className="text-[var(--color-text-sub)]">name</span>
+            <span className="text-[var(--color-text-sub)]">이름</span>
             <Input
               onChange={(event) => onMetaChange({ name: event.target.value })}
               value={overlayMeta.name}
             />
           </label>
           <label className="space-y-2 text-sm md:col-span-2">
-            <span className="text-[var(--color-text-sub)]">description</span>
+            <span className="text-[var(--color-text-sub)]">설명</span>
             <Textarea
               onChange={(event) => onMetaChange({ description: event.target.value })}
               value={overlayMeta.description}
             />
           </label>
           <label className="space-y-2 text-sm">
-            <span className="text-[var(--color-text-sub)]">code</span>
+            <span className="text-[var(--color-text-sub)]">코드</span>
             <Input
               maxLength={6}
               onChange={(event) => onMetaChange({ code: event.target.value.toUpperCase() })}
@@ -136,11 +136,11 @@ export function UploadOverlayModal({
               onClick={() => onMetaChange({ code: generateCode() })}
               variant="secondary"
             >
-              Generate Code
+              코드 생성
             </Button>
           </div>
           <label className="space-y-2 text-sm">
-            <span className="text-[var(--color-text-sub)]">platform</span>
+            <span className="text-[var(--color-text-sub)]">플랫폼</span>
             <Select
               onChange={(event) =>
                 onMetaChange({
@@ -159,7 +159,7 @@ export function UploadOverlayModal({
             </Select>
           </label>
           <label className="space-y-2 text-sm">
-            <span className="text-[var(--color-text-sub)]">category</span>
+            <span className="text-[var(--color-text-sub)]">카테고리</span>
             <Select
               onChange={(event) => {
                 const selected = games.find((game) => String(game.id) === event.target.value);
@@ -171,7 +171,7 @@ export function UploadOverlayModal({
               required
               value={overlayMeta.gameId ?? ""}
             >
-              <option value="">{isGameLoading ? "Loading categories..." : "Select category"}</option>
+              <option value="">{isGameLoading ? "카테고리 불러오는 중..." : "카테고리 선택"}</option>
               {games.map((game) => (
                 <option key={game.id} value={game.id}>
                   {game.displayName}
@@ -182,10 +182,10 @@ export function UploadOverlayModal({
         </div>
         <div className="flex justify-end gap-3 border-t border-[var(--color-border)] pt-4">
           <Button disabled={isUploading} onClick={onClose} variant="ghost">
-            Cancel
+            취소
           </Button>
           <Button disabled={isUploading} type="submit" variant="primary">
-            {isUploading ? "Saving..." : resolvedSubmitLabel}
+            {isUploading ? "저장 중..." : resolvedSubmitLabel}
           </Button>
         </div>
       </form>

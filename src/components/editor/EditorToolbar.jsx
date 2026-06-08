@@ -28,7 +28,7 @@ export function EditorToolbar({
   return (
     <Card className="flex h-full flex-col gap-3 rounded-none border-x-0 p-3">
       <div>
-        <h2 className="text-sm font-semibold">Toolbar</h2>
+        <h2 className="text-sm font-semibold">도구 모음</h2>
       </div>
       <div className="grid grid-cols-2 gap-2">
         {TOOL_ITEMS.map((tool) => {

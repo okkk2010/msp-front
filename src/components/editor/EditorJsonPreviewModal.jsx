@@ -10,11 +10,11 @@ export function EditorJsonPreviewModal({
   summary,
 }) {
   return (
-    <Modal open={open} title="Overlay JSON Preview">
+    <Modal open={open} title="오버레이 JSON 미리보기">
       <div className="space-y-4">
         {errors.length ? (
           <div className="rounded-2xl border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/10 p-4">
-            <h3 className="text-sm font-semibold text-[var(--color-danger)]">Validation Errors</h3>
+            <h3 className="text-sm font-semibold text-[var(--color-danger)]">검증 오류</h3>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--color-text-main)]">
               {errors.map((error) => (
                 <li key={error}>{error}</li>
@@ -23,20 +23,20 @@ export function EditorJsonPreviewModal({
           </div>
         ) : (
           <div className="rounded-2xl border border-[var(--color-success)]/40 bg-[var(--color-success)]/10 p-4 text-sm text-[var(--color-text-main)]">
-            Validation passed.
+            검증을 통과했습니다.
           </div>
         )}
 
         {summary ? (
           <div className="grid gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] p-4 md:grid-cols-2">
-            <SummaryItem label="Schema" value={summary.schemaVersion} />
-            <SummaryItem label="Overlay ID" value={summary.overlayId} />
-            <SummaryItem label="Platform" value={summary.platform} />
-            <SummaryItem label="Canvas" value={`${summary.baseWidth} x ${summary.baseHeight}`} />
-            <SummaryItem label="Opacity" value={String(summary.opacity)} />
-            <SummaryItem label="Elements" value={`${summary.elementCount}`} />
+            <SummaryItem label="스키마" value={summary.schemaVersion} />
+            <SummaryItem label="오버레이 ID" value={summary.overlayId} />
+            <SummaryItem label="플랫폼" value={summary.platform} />
+            <SummaryItem label="캔버스" value={`${summary.baseWidth} x ${summary.baseHeight}`} />
+            <SummaryItem label="투명도" value={String(summary.opacity)} />
+            <SummaryItem label="요소" value={`${summary.elementCount}`} />
             <SummaryItem
-              label="Types"
+              label="유형"
               value={summary.elementTypes?.length ? summary.elementTypes.join(", ") : "-"}
             />
           </div>
@@ -48,10 +48,10 @@ export function EditorJsonPreviewModal({
 
         <div className="flex flex-wrap justify-end gap-2">
           <Button onClick={onClose} variant="ghost">
-            Close
+            닫기
           </Button>
           <Button onClick={onExport} variant="secondary">
-            Export JSON
+            JSON 내보내기
           </Button>
         </div>
       </div>

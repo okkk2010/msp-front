@@ -1,6 +1,6 @@
 import { Button } from "../common/Button";
 
-export function UserProfileButton({ userName = "Guest" }) {
+export function UserProfileButton({ userName = "게스트" }) {
   return (
     <Button className="max-w-36 gap-2" variant="secondary">
       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary-soft)] text-xs text-[var(--color-primary)]">
