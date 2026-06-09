@@ -40,7 +40,7 @@ export function OverlayCard({
           }}
           variant={likedByMe ? "primary" : "secondary"}
         >
-          <span aria-hidden="true">{likedByMe ? "♥" : "♡"}</span> {likeCount ?? 0}
+          <span aria-hidden="true" className="mr-1.5">{likedByMe ? "♥" : "♡"}</span>{likeCount ?? 0}
         </Button>
         <Button
           className="flex-1"
