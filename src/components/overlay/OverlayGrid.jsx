@@ -8,6 +8,7 @@ export function OverlayGrid({
   isLoading,
   items,
   onCardClick,
+  onLike,
   onRetry,
   onSave,
 }) {
@@ -58,6 +59,7 @@ export function OverlayGrid({
           key={item.id ?? item.code}
           {...item}
           onClick={() => onCardClick(item)}
+          onLike={() => onLike(item)}
           onSave={() => onSave(item)}
         />
       ))}

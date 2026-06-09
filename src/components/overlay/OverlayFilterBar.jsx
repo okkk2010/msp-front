@@ -5,7 +5,8 @@ import { Select } from "../common/Select";
 const SORT_TABS = [
   { label: "최신", value: "newest" },
   { label: "업데이트", value: "updated" },
-  { label: "인기", value: "saved" },
+  { label: "저장순", value: "saved" },
+  { label: "좋아요순", value: "likes" },
 ];
 
 export function OverlayFilterBar({
@@ -29,7 +30,7 @@ export function OverlayFilterBar({
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {SORT_TABS.map((tab) => (
           <Button
             className="justify-center whitespace-nowrap px-3"
@@ -66,6 +67,7 @@ export function OverlayFilterBar({
             <option value="newest">최신순</option>
             <option value="updated">최근 업데이트순</option>
             <option value="saved">저장 많은 순</option>
+            <option value="likes">좋아요 많은 순</option>
           </Select>
         </div>
       </div>

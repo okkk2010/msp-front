@@ -79,7 +79,7 @@ export { overlayFilterStore };
  * @property {string} code
  * @property {string} platform
  * @property {string} game
- * @property {"newest" | "updated" | "saved"} sort
+ * @property {"newest" | "updated" | "saved" | "likes"} sort
  * @property {number} page
  * @property {number} size
  */

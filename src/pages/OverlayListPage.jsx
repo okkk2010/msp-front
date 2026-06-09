@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { fetchGamesByPlatform } from "../api/gameApi";
 import { saveOverlayToLibrary } from "../api/libraryApi";
+import { likeOverlay, unlikeOverlay } from "../api/likeApi";
 import { fetchOverlayList } from "../api/overlayApi";
 import { Button } from "../components/common/Button";
 import { PlatformTabs } from "../components/common/PlatformTabs";
@@ -152,6 +153,55 @@ export function OverlayListPage() {
     }
   }
 
+  async function handleLike(item) {
+    if (!isAuthenticated) {
+      showToast({
+        message: "좋아요를 누르려면 로그인해 주세요.",
+        type: "info",
+      });
+      navigate("/library");
+      return;
+    }
+
+    const nextLiked = !item.likedByMe;
+
+    setItems((currentItems) =>
+      currentItems.map((currentItem) =>
+        currentItem.id === item.id
+          ? {
+              ...currentItem,
+              likedByMe: nextLiked,
+              likeCount: Math.max(0, (currentItem.likeCount ?? 0) + (nextLiked ? 1 : -1)),
+            }
+          : currentItem,
+      ),
+    );
+
+    try {
+      if (nextLiked) {
+        await likeOverlay(item.id);
+      } else {
+        await unlikeOverlay(item.id);
+      }
+    } catch (requestError) {
+      setItems((currentItems) =>
+        currentItems.map((currentItem) =>
+          currentItem.id === item.id
+            ? {
+                ...currentItem,
+                likedByMe: item.likedByMe,
+                likeCount: item.likeCount ?? 0,
+              }
+            : currentItem,
+        ),
+      );
+      showToast({
+        message: getApiErrorMessage(requestError),
+        type: "error",
+      });
+    }
+  }
+
   function handlePlatformChange(nextPlatform) {
     if (nextPlatform === filters.platform) {
       return;
@@ -227,6 +277,7 @@ export function OverlayListPage() {
             isLoading={isLoading}
             items={items}
             onCardClick={(item) => navigate(`/overlays/${item.overlayId}`)}
+            onLike={handleLike}
             onRetry={() => {
               setReloadNonce((value) => value + 1);
             }}
@@ -275,6 +326,8 @@ function normalizeOverlayItems(data) {
     elementTypes: item.elementTypes ?? [],
     isSaved: Boolean(item.isSaved),
     savedCount: item.savedCount ?? 0,
+    likeCount: item.likeCount ?? 0,
+    likedByMe: Boolean(item.likedByMe),
     updatedAt: formatRelativeDate(item.updatedAt),
   }));
 }

@@ -5,8 +5,11 @@ import { PlatformIconBadge } from "../common/PlatformIconBadge";
 export function OverlayCard({
   code,
   isSaved,
+  likeCount,
+  likedByMe,
   name,
   onClick,
+  onLike,
   onSave,
   platform,
   thumbnailUrl,
@@ -28,9 +31,19 @@ export function OverlayCard({
           {name || "제목 없는 오버레이"}
         </h3>
       </section>
-      <section className="mt-auto p-4">
+      <section className="mt-auto flex items-center gap-2 p-4">
         <Button
-          className="w-full"
+          className="shrink-0 whitespace-nowrap"
+          onClick={(event) => {
+            event.stopPropagation();
+            onLike?.();
+          }}
+          variant={likedByMe ? "primary" : "secondary"}
+        >
+          <span aria-hidden="true">{likedByMe ? "♥" : "♡"}</span> {likeCount ?? 0}
+        </Button>
+        <Button
+          className="flex-1"
           onClick={(event) => {
             event.stopPropagation();
             onSave?.();

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { saveOverlayToLibrary } from "../api/libraryApi";
+import { likeOverlay, unlikeOverlay } from "../api/likeApi";
 import { fetchOverlayDetail } from "../api/overlayApi";
 import { Button } from "../components/common/Button";
 import { Card } from "../components/common/Card";
@@ -24,6 +25,7 @@ export function OverlayDetailPage() {
   const [detail, setDetail] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -89,6 +91,59 @@ export function OverlayDetailPage() {
       });
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleToggleLike() {
+    if (!detail) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      showToast({
+        message: "좋아요를 누르려면 로그인해 주세요.",
+        type: "info",
+      });
+      return;
+    }
+
+    const nextLiked = !detail.likedByMe;
+    const previousLiked = detail.likedByMe;
+    const previousCount = detail.likeCount ?? 0;
+
+    setDetail((current) =>
+      current
+        ? {
+            ...current,
+            likedByMe: nextLiked,
+            likeCount: Math.max(0, (current.likeCount ?? 0) + (nextLiked ? 1 : -1)),
+          }
+        : current,
+    );
+
+    try {
+      setIsLiking(true);
+      if (nextLiked) {
+        await likeOverlay(detail.id);
+      } else {
+        await unlikeOverlay(detail.id);
+      }
+    } catch (requestError) {
+      setDetail((current) =>
+        current
+          ? {
+              ...current,
+              likedByMe: previousLiked,
+              likeCount: previousCount,
+            }
+          : current,
+      );
+      showToast({
+        message: getApiErrorMessage(requestError),
+        type: "error",
+      });
+    } finally {
+      setIsLiking(false);
     }
   }
 
@@ -172,6 +227,13 @@ export function OverlayDetailPage() {
             ) : null}
             <Button disabled={isSaving} onClick={handleSaveToLibrary}>
               {isSaving ? "저장 중..." : "라이브러리에 저장"}
+            </Button>
+            <Button
+              disabled={isLiking}
+              onClick={handleToggleLike}
+              variant={detail.likedByMe ? "primary" : "secondary"}
+            >
+              <span aria-hidden="true">{detail.likedByMe ? "♥" : "♡"}</span> 좋아요 {detail.likeCount ?? 0}
             </Button>
             {!canEdit ? (
               <Button onClick={handleUseAsTemplate} variant="secondary">
