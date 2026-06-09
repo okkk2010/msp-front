@@ -275,7 +275,11 @@ export function OverlayListPage() {
           <OverlayGrid
             error={error}
             isLoading={isLoading}
-            items={items}
+            items={
+              user
+                ? items
+                : items.map((item) => (item.likedByMe ? { ...item, likedByMe: false } : item))
+            }
             onCardClick={(item) => navigate(`/overlays/${item.overlayId}`)}
             onLike={handleLike}
             onRetry={() => {

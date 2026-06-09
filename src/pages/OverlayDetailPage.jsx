@@ -231,9 +231,9 @@ export function OverlayDetailPage() {
             <Button
               disabled={isLiking}
               onClick={handleToggleLike}
-              variant={detail.likedByMe ? "primary" : "secondary"}
+              variant={user && detail.likedByMe ? "primary" : "secondary"}
             >
-              <span aria-hidden="true">{detail.likedByMe ? "♥" : "♡"}</span> 좋아요 {detail.likeCount ?? 0}
+              <span aria-hidden="true">{user && detail.likedByMe ? "♥" : "♡"}</span> 좋아요 {detail.likeCount ?? 0}
             </Button>
             {!canEdit ? (
               <Button onClick={handleUseAsTemplate} variant="secondary">
