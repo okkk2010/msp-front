@@ -24,7 +24,7 @@ export function OverlayCard({
       <section className="border-b border-[var(--color-border)] p-4">
         <Thumbnail name={name} thumbnailUrl={thumbnailUrl} />
       </section>
-      <section className="grid min-h-16 grid-cols-2 gap-3 border-b border-[var(--color-border)] p-4">
+      <section className="grid min-h-20 grid-cols-2 gap-3 border-b border-[var(--color-border)] p-4">
         <PlatformMetaItem platform={platform} />
         <CodeMetaItem code={code} />
       </section>
@@ -61,7 +61,8 @@ export function OverlayCard({
 
 function PlatformMetaItem({ platform }) {
   return (
-    <div className="flex min-w-0 items-center">
+    <div className="min-w-0 space-y-1">
+      <p className="text-[10px] font-semibold uppercase leading-4 text-[var(--color-text-sub)]">Platform</p>
       <PlatformIconBadge platform={platform} />
     </div>
   );
@@ -70,11 +71,15 @@ function PlatformMetaItem({ platform }) {
 function CodeMetaItem({ code }) {
   const [copied, setCopied] = useState(false);
   const value = code ?? "코드 없음";
+  const canCopy = Boolean(code) && typeof navigator !== "undefined" && Boolean(navigator.clipboard);
+
+  const baseClassName =
+    "block w-full max-w-full truncate rounded-full border border-[var(--color-primary-soft)] bg-[var(--color-primary-soft)] px-3 py-1 text-center text-sm font-semibold leading-5 text-[var(--color-primary)]";
 
   function handleCopy(event) {
     event.stopPropagation();
 
-    if (!code || !navigator.clipboard) {
+    if (!canCopy) {
       return;
     }
 
@@ -88,62 +93,24 @@ function CodeMetaItem({ code }) {
   }
 
   return (
-    <div className="flex min-w-0 items-center justify-end gap-1.5">
-      <span
-        className="block max-w-full truncate rounded-full border border-[var(--color-primary-soft)] bg-[var(--color-primary-soft)] px-3 py-1 text-center text-sm font-semibold leading-5 text-[var(--color-primary)]"
-        title={value}
-      >
-        {value}
-      </span>
-      {code ? (
+    <div className="min-w-0 space-y-1">
+      <p className="text-[10px] font-semibold uppercase leading-4 text-[var(--color-text-sub)]">Code</p>
+      {canCopy ? (
         <button
-          type="button"
-          aria-label="코드 복사"
-          title={copied ? "복사됨" : "코드 복사"}
-          className="shrink-0 rounded-md border border-[var(--color-border)] p-1 text-[var(--color-text-sub)] transition-colors hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-primary)]"
+          aria-label={`코드 ${value} 복사`}
+          className={`${baseClassName} cursor-pointer transition-colors hover:bg-[var(--color-primary)] hover:text-white`}
           onClick={handleCopy}
+          title={copied ? "복사됨" : "클릭하여 코드 복사"}
+          type="button"
         >
-          {copied ? <CheckIcon /> : <CopyIcon />}
+          {copied ? "복사됨!" : value}
         </button>
-      ) : null}
+      ) : (
+        <span className={baseClassName} title={value}>
+          {value}
+        </span>
+      )}
     </div>
-  );
-}
-
-function CopyIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      height="14"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-      width="14"
-    >
-      <rect height="13" rx="2" width="13" x="9" y="9" />
-      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      height="14"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-      width="14"
-    >
-      <path d="M20 6 9 17l-5-5" />
-    </svg>
   );
 }
 
