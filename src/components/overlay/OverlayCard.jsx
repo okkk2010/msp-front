@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { Button } from "../common/Button";
 import { Card } from "../common/Card";
 import { PlatformIconBadge } from "../common/PlatformIconBadge";
@@ -22,9 +24,9 @@ export function OverlayCard({
       <section className="border-b border-[var(--color-border)] p-4">
         <Thumbnail name={name} thumbnailUrl={thumbnailUrl} />
       </section>
-      <section className="grid min-h-20 grid-cols-2 gap-3 border-b border-[var(--color-border)] p-4">
+      <section className="grid min-h-16 grid-cols-2 gap-3 border-b border-[var(--color-border)] p-4">
         <PlatformMetaItem platform={platform} />
-        <MetaItem label="Code" tone="primary" value={code ?? "코드 없음"} />
+        <CodeMetaItem code={code} />
       </section>
       <section className="min-h-20 border-b border-[var(--color-border)] p-4">
         <h3 className="line-clamp-2 break-words text-base font-semibold leading-6 text-[var(--color-text-main)]">
@@ -59,32 +61,89 @@ export function OverlayCard({
 
 function PlatformMetaItem({ platform }) {
   return (
-    <div className="min-w-0 space-y-1">
-      <p className="text-[10px] font-semibold uppercase leading-4 text-[var(--color-text-sub)]">Platform</p>
+    <div className="flex min-w-0 items-center">
       <PlatformIconBadge platform={platform} />
     </div>
   );
 }
 
-function MetaItem({ label, tone, value }) {
-  const toneClass =
-    tone === "primary"
-      ? "border-[var(--color-primary-soft)] bg-[var(--color-primary-soft)] text-[var(--color-primary)]"
-      : "border-[var(--color-accent-soft)] bg-[var(--color-accent-soft)] text-[var(--color-accent)]";
+function CodeMetaItem({ code }) {
+  const [copied, setCopied] = useState(false);
+  const value = code ?? "코드 없음";
+
+  function handleCopy(event) {
+    event.stopPropagation();
+
+    if (!code || !navigator.clipboard) {
+      return;
+    }
+
+    navigator.clipboard
+      .writeText(code)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1200);
+      })
+      .catch(() => {});
+  }
 
   return (
-    <div className="min-w-0 space-y-1">
-      <p className="text-[10px] font-semibold uppercase leading-4 text-[var(--color-text-sub)]">{label}</p>
+    <div className="flex min-w-0 items-center justify-end gap-1.5">
       <span
-        className={[
-          "block max-w-full truncate rounded-full border px-3 py-1 text-center text-sm font-semibold leading-5",
-          toneClass,
-        ].join(" ")}
+        className="block max-w-full truncate rounded-full border border-[var(--color-primary-soft)] bg-[var(--color-primary-soft)] px-3 py-1 text-center text-sm font-semibold leading-5 text-[var(--color-primary)]"
         title={value}
       >
         {value}
       </span>
+      {code ? (
+        <button
+          type="button"
+          aria-label="코드 복사"
+          title={copied ? "복사됨" : "코드 복사"}
+          className="shrink-0 rounded-md border border-[var(--color-border)] p-1 text-[var(--color-text-sub)] transition-colors hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-primary)]"
+          onClick={handleCopy}
+        >
+          {copied ? <CheckIcon /> : <CopyIcon />}
+        </button>
+      ) : null}
     </div>
+  );
+}
+
+function CopyIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="none"
+      height="14"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+      width="14"
+    >
+      <rect height="13" rx="2" width="13" x="9" y="9" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="none"
+      height="14"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+      width="14"
+    >
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
   );
 }
 
