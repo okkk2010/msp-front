@@ -61,7 +61,7 @@ export function OverlayDetailPage() {
     return () => {
       active = false;
     };
-  }, [overlayId]);
+  }, [overlayId, user?.id]);
 
   async function handleSaveToLibrary() {
     if (!detail) {

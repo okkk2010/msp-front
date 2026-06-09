@@ -23,7 +23,7 @@ const DEFAULT_GAME_PLATFORM = "windows";
 export function OverlayListPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { showToast } = useToast();
   const {
     filters,
@@ -115,7 +115,7 @@ export function OverlayListPage() {
     return () => {
       active = false;
     };
-  }, [filters, reloadNonce]);
+  }, [filters, reloadNonce, user?.id]);
 
   async function handleSave(item) {
     if (!isAuthenticated) {
