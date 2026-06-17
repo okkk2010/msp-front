@@ -20,10 +20,27 @@ export function fetchOverlayDetail(id) {
   return unwrapResponse(axiosInstance.get(`/api/overlays/${id}`));
 }
 
+/**
+ * Fetches overlays created by the authenticated user.
+ *
+ * @param {{ platform?: string, keyword?: string, game?: string }} [filters]
+ */
+export function fetchMyOverlays(filters = {}) {
+  return unwrapResponse(
+    axiosInstance.get("/api/overlays", {
+      params: createQueryParams({ ...filters, mine: true, size: 100 }),
+    }),
+  );
+}
+
 export function createOverlay(formData) {
   return unwrapResponse(axiosInstance.post("/api/overlays", formData));
 }
 
 export function updateOverlay(id, formData) {
   return unwrapResponse(axiosInstance.patch(`/api/overlays/${id}`, formData));
+}
+
+export function deleteOverlay(id) {
+  return unwrapResponse(axiosInstance.delete(`/api/overlays/${id}`));
 }

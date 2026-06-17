@@ -3,12 +3,13 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { saveOverlayToLibrary } from "../api/libraryApi";
 import { likeOverlay, unlikeOverlay } from "../api/likeApi";
-import { fetchOverlayDetail } from "../api/overlayApi";
+import { deleteOverlay, fetchOverlayDetail } from "../api/overlayApi";
 import { Button } from "../components/common/Button";
 import { Card } from "../components/common/Card";
 import { EmptyState } from "../components/common/EmptyState";
 import { ErrorMessage } from "../components/common/ErrorMessage";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
+import { Modal } from "../components/common/Modal";
 import { OverlayDetailInfo } from "../components/overlay/OverlayDetailInfo";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
@@ -26,6 +27,8 @@ export function OverlayDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -175,6 +178,29 @@ export function OverlayDetailPage() {
     window.open(detail.jsonUrl, "_blank", "noopener,noreferrer");
   }
 
+  async function handleDeleteOverlay() {
+    if (!detail) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      await deleteOverlay(detail.overlayId);
+      setIsDeleteModalOpen(false);
+      showToast({
+        message: "오버레이를 삭제했습니다.",
+        type: "success",
+      });
+      navigate("/overlays");
+    } catch (requestError) {
+      showToast({
+        message: getApiErrorMessage(requestError),
+        type: "error",
+      });
+      setIsDeleting(false);
+    }
+  }
+
   if (isLoading) {
     return (
       <section className="space-y-4">
@@ -246,9 +272,40 @@ export function OverlayDetailPage() {
             <Button onClick={() => navigate("/overlays")} variant="ghost">
               탐색으로 돌아가기
             </Button>
+            {canEdit ? (
+              <Button
+                className="border-[var(--color-danger)] text-[var(--color-danger)] hover:border-[var(--color-danger)] hover:text-[var(--color-danger)]"
+                onClick={() => setIsDeleteModalOpen(true)}
+                variant="secondary"
+              >
+                오버레이 삭제
+              </Button>
+            ) : null}
           </div>
         </div>
       </div>
+
+      <Modal open={isDeleteModalOpen} title="오버레이 삭제">
+        <p className="text-sm text-[var(--color-text-sub)]">
+          {`"${detail.name}" 오버레이를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`}
+        </p>
+        <div className="mt-6 flex justify-end gap-2">
+          <Button
+            disabled={isDeleting}
+            onClick={() => setIsDeleteModalOpen(false)}
+            variant="ghost"
+          >
+            취소
+          </Button>
+          <Button
+            className="bg-[var(--color-danger)] text-white hover:brightness-105"
+            disabled={isDeleting}
+            onClick={handleDeleteOverlay}
+          >
+            {isDeleting ? "삭제 중..." : "삭제"}
+          </Button>
+        </div>
+      </Modal>
     </section>
   );
 }
