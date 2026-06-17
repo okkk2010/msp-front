@@ -12,3 +12,7 @@ export function saveOverlayToLibrary(overlayId) {
     }),
   );
 }
+
+export function removeOverlayFromLibrary(overlayId) {
+  return unwrapResponse(axiosInstance.delete(`/api/library/${overlayId}`));
+}

@@ -7,9 +7,11 @@ export function LibraryGrid({
   error,
   isLoading,
   items,
+  onRemove,
   onRetry,
   onUseAsTemplate,
   onViewDetail,
+  removingOverlayId,
 }) {
   if (isLoading) {
     return (
@@ -56,7 +58,9 @@ export function LibraryGrid({
       {items.map((item) => (
         <LibraryItemCard
           key={item.libraryId}
+          isRemoving={removingOverlayId === item.overlay.id}
           item={item}
+          onRemove={() => onRemove(item)}
           onUseAsTemplate={() => onUseAsTemplate(item)}
           onViewDetail={() => onViewDetail(item)}
         />

@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-import { fetchLibraryItems, saveOverlayToLibrary } from "../api/libraryApi";
+import {
+  fetchLibraryItems,
+  removeOverlayFromLibrary,
+  saveOverlayToLibrary,
+} from "../api/libraryApi";
 import { fetchGamesByPlatform } from "../api/gameApi";
 import { likeOverlay, unlikeOverlay } from "../api/likeApi";
 import { fetchMyOverlays } from "../api/overlayApi";
@@ -12,7 +16,7 @@ import { Select } from "../components/common/Select";
 import { LibraryGrid } from "../components/library/LibraryGrid";
 import { OverlayGrid } from "../components/overlay/OverlayGrid";
 import { useToast } from "../hooks/useToast";
-import { markOverlaySaved, setLibraryItems } from "../store/libraryStore";
+import { markOverlaySaved, setLibraryItems, unmarkOverlaySaved } from "../store/libraryStore";
 import { buildAssetUrl } from "../utils/assetUrl";
 import { getApiErrorMessage } from "../utils/apiError";
 import { formatRelativeDate } from "../utils/dateFormat";
@@ -41,6 +45,7 @@ export function LibraryPage() {
   const [myError, setMyError] = useState("");
   const [reloadNonce, setReloadNonce] = useState(0);
   const [myReloadNonce, setMyReloadNonce] = useState(0);
+  const [removingOverlayId, setRemovingOverlayId] = useState(null);
 
   useEffect(() => {
     const nextPlatform = normalizePlatformQuery(searchParams.get("platform")) ?? DEFAULT_LIBRARY_PLATFORM;
@@ -280,6 +285,35 @@ export function LibraryPage() {
     }
   }
 
+  async function handleRemoveFromLibrary(item) {
+    const overlayId = item.overlay.id;
+
+    try {
+      setRemovingOverlayId(overlayId);
+      await removeOverlayFromLibrary(overlayId);
+      setItems((current) => current.filter((entry) => entry.overlay.id !== overlayId));
+      unmarkOverlaySaved(overlayId);
+      setMyItems((current) =>
+        current.map((overlay) =>
+          overlay.id === overlayId
+            ? { ...overlay, isSaved: false, savedCount: Math.max(0, (overlay.savedCount ?? 0) - 1) }
+            : overlay,
+        ),
+      );
+      showToast({
+        message: "라이브러리에서 제거했습니다.",
+        type: "success",
+      });
+    } catch (requestError) {
+      showToast({
+        message: getApiErrorMessage(requestError),
+        type: "error",
+      });
+    } finally {
+      setRemovingOverlayId(null);
+    }
+  }
+
   return (
     <section className="space-y-8">
       <div className="space-y-2">
@@ -351,9 +385,11 @@ export function LibraryPage() {
           error={error}
           isLoading={isLoading}
           items={filteredItems}
+          onRemove={handleRemoveFromLibrary}
           onRetry={() => setReloadNonce((value) => value + 1)}
           onUseAsTemplate={(item) => navigate(`/editor/${item.overlay.overlayId}`)}
           onViewDetail={(item) => navigate(`/overlays/${item.overlay.overlayId}`)}
+          removingOverlayId={removingOverlayId}
         />
       )}
     </section>

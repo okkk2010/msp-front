@@ -23,6 +23,17 @@ export function markOverlaySaved(overlayId) {
   }));
 }
 
+export function unmarkOverlaySaved(overlayId) {
+  libraryStore.setState((state) => {
+    const next = new Set(state.savedOverlayIds);
+    next.delete(overlayId);
+    return {
+      ...state,
+      savedOverlayIds: next,
+    };
+  });
+}
+
 export function isOverlaySaved(overlayId) {
   return libraryStore.getState().savedOverlayIds.has(overlayId);
 }

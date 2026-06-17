@@ -3,7 +3,7 @@ import { Button } from "../common/Button";
 import { Card } from "../common/Card";
 import { PlatformIconBadge } from "../common/PlatformIconBadge";
 
-export function LibraryItemCard({ item, onUseAsTemplate, onViewDetail }) {
+export function LibraryItemCard({ item, isRemoving, onRemove, onUseAsTemplate, onViewDetail }) {
   const overlay = item.overlay;
 
   return (
@@ -34,6 +34,14 @@ export function LibraryItemCard({ item, onUseAsTemplate, onViewDetail }) {
                 상세 보기
               </Button>
               <Button onClick={onUseAsTemplate}>템플릿으로 사용</Button>
+              <Button
+                className="border-[var(--color-danger)] text-[var(--color-danger)] hover:border-[var(--color-danger)] hover:text-[var(--color-danger)]"
+                disabled={isRemoving}
+                onClick={onRemove}
+                variant="secondary"
+              >
+                {isRemoving ? "제거 중..." : "라이브러리에서 제거"}
+              </Button>
             </div>
           </div>
         </div>
